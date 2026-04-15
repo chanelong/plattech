@@ -9,15 +9,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Pull credentials from Railway Variables tab
-// Note the underscore in MYSQL_DATABASE to match your Railway settings
 $host = getenv('MYSQLHOST') ?: "mysql.railway.internal";
 $port = getenv('MYSQLPORT') ?: 3306;
 $user = getenv('MYSQLUSER') ?: "root";
-$pass = getenv('MYSQLPASSWORD') ?: "dxwtczmsRQevehKwkWubwFcGmBymdvVx";
-$db   = getenv('MYSQL_DATABASE') ?: "railway"; 
+$pass = getenv('MYSQLPASSWORD') ?: "";
+$db   = getenv('MYSQLDATABASE') ?: "railway";
 
-$conn = new mysqli($host, $user, $pass, $db, $port);
+$conn = new mysqli($host, $user, $pass, $db, (int)$port);
 
 if ($conn->connect_error) {
     http_response_code(500);
