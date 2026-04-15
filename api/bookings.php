@@ -88,7 +88,8 @@ if ($action === 'update' && $method === 'POST') {
   $status  = $data['status'] ?? 'pending';
   $ownerId = intval($data['owner_id'] ?? 0);
 
-  if (!in_array($status, ['approved', 'rejected', 'pending', 'vacated'])) {
+  // ✅ 'cancelled' is now included
+  if (!in_array($status, ['approved', 'rejected', 'pending', 'vacated', 'cancelled'])) {
     echo json_encode(["success" => false, "message" => "Invalid status"]);
     exit;
   }
@@ -153,6 +154,25 @@ if ($action === 'update' && $method === 'POST') {
     // Notify rentee confirmation
     $renteeMsg = "You have successfully vacated {$b['dorm_name']}. Thank you for staying with us!";
     $nr = $conn->prepare("INSERT INTO notifications (user_id, type, message, related_id) VALUES (?, 'vacated_confirmed', ?, ?)");
+    $nr->bind_param("isi", $b['user_id'], $renteeMsg, $id);
+    $nr->execute();
+
+  } elseif ($status === 'cancelled') {
+    // If cancelling an already-approved booking, restore availability
+    if ($b['status'] === 'approved') {
+      $conn->query("UPDATE dorms SET availability = availability + 1 WHERE id = {$b['dorm_id']} AND availability < total_slots");
+    }
+    logActivity($conn, $b['user_id'], "booking_update", "{$b['rentee_name']} cancelled booking #{$id} for {$b['dorm_name']}");
+
+    // Notify the owner
+    $ownerMsg = "{$b['rentee_name']} has cancelled their booking for {$b['dorm_name']}.";
+    $no = $conn->prepare("INSERT INTO notifications (user_id, type, message, related_id) VALUES (?, 'booking_cancelled', ?, ?)");
+    $no->bind_param("isi", $b['owner_id'], $ownerMsg, $id);
+    $no->execute();
+
+    // Notify rentee confirmation
+    $renteeMsg = "You have successfully cancelled your booking for {$b['dorm_name']}.";
+    $nr = $conn->prepare("INSERT INTO notifications (user_id, type, message, related_id) VALUES (?, 'cancelled_confirmed', ?, ?)");
     $nr->bind_param("isi", $b['user_id'], $renteeMsg, $id);
     $nr->execute();
   }
