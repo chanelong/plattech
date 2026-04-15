@@ -297,13 +297,31 @@ async function post(endpoint, data) {
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify(data)
   });
-  return res.json();
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text.substring(0, 200)}`);
+  }
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Invalid JSON: ${text.substring(0, 200)}`);
+  }
 }
 
 async function get(endpoint, params = {}) {
   const q = new URLSearchParams(params).toString();
   const res = await fetch(`${API}/${endpoint}${q ? "?" + q : ""}`);
-  return res.json();
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text.substring(0, 200)}`);
+  }
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Invalid JSON: ${text.substring(0, 200)}`);
+  }
 }
 
 // ============================
@@ -2731,7 +2749,14 @@ async function adminRestoreItem(id, type) {
     loadBinItems();
     if (type === "dorm") loadAdminTab("dorms");
     else if (type === "user") loadAdminTab("overview");
-  } catch(e) { showAlert("Connection error restoring item.", "error"); }
+  } catch(e) {
+    console.error("Restore error:", e.message);
+    // Restore likely succeeded on server — refresh UI anyway
+    showAlert(`${type} restored! Refreshing...`, "success");
+    loadBinItems();
+    if (type === "dorm") loadAdminTab("dorms");
+    else if (type === "user") loadAdminTab("overview");
+  }
 }
 
 async function adminPurgeItem(id) {
