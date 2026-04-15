@@ -18,7 +18,6 @@ if ($action === 'list' && $method === 'GET') {
     $available  = $_GET['available'] ?? '';
     $search     = $_GET['search'] ?? '';
 
-    // IMPORTANT: Join with users table to get owner_name
     $sql = "SELECT d.*, u.name as owner_name,
             (SELECT AVG(rating) FROM reviews WHERE dorm_id = d.id) as avg_rating,
             (SELECT COUNT(*) FROM reviews WHERE dorm_id = d.id) as review_count
@@ -63,6 +62,37 @@ if ($action === 'list' && $method === 'GET') {
 }
 
 // ============================================
+// GET single dorm detail
+// ============================================
+if ($action === 'detail' && $method === 'GET') {
+    $id = intval($_GET['id'] ?? 0);
+
+    $stmt = $conn->prepare("
+        SELECT d.*, u.name as owner_name,
+        (SELECT AVG(rating) FROM reviews WHERE dorm_id = d.id) as avg_rating,
+        (SELECT COUNT(*) FROM reviews WHERE dorm_id = d.id) as review_count
+        FROM dorms d
+        JOIN users u ON d.owner_id = u.id
+        WHERE d.id = ?
+    ");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $dorm = $stmt->get_result()->fetch_assoc();
+
+    if (!$dorm) {
+        echo json_encode(["success" => false, "message" => "Dorm not found"]);
+        exit;
+    }
+
+    $dorm['amenities']  = $dorm['amenities'] ? explode(",", $dorm['amenities']) : [];
+    $dorm['images']     = parseImages($dorm['images'] ?? '');
+    $dorm['avg_rating'] = $dorm['avg_rating'] ? round((float)$dorm['avg_rating'], 1) : 0;
+
+    echo json_encode($dorm);
+    exit;
+}
+
+// ============================================
 // POST upload images (Linux compatible)
 // ============================================
 if ($action === 'upload_images' && $method === 'POST') {
@@ -77,7 +107,7 @@ if ($action === 'upload_images' && $method === 'POST') {
 
     $uploadDir = __DIR__ . '/uploads/dorms/' . $dormId . '/';
     if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true); // Use 0777 for Railway permissions
+        mkdir($uploadDir, 0777, true);
     }
 
     $allowed  = ['image/jpeg', 'image/png', 'image/webp'];
@@ -109,5 +139,4 @@ if ($action === 'upload_images' && $method === 'POST') {
     echo json_encode(["success" => true, "uploaded" => $uploaded]);
     exit;
 }
-// ... Rest of your specific actions (delete, add, edit) follow the same pattern
 ?>
