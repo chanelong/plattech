@@ -1,0 +1,8 @@
+# Allow cross-origin requests
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type"
+
+# Hide PHP errors from users (log them instead)
+php_flag display_errors Off
+php_flag log_errors On

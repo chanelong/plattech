@@ -1,0 +1,2844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>dormMNL</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;overflow-x:hidden;}
+:root{
+  --bg:#F5F3EE;--surface:#FFFFFF;--surface2:#F0EDE8;
+  --text:#1A1A1A;--text2:#6B6760;--text3:#A09D99;
+  --accent:#D85A30;--accent2:#185FA5;--green:#3B6D11;
+  --border:#E4E1DC;--radius:12px;--radius-sm:8px;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+h1,h2,h3{font-family:'Syne',sans-serif;font-weight:700;letter-spacing:normal;}
+.hidden{display:none!important;}
+button{cursor:pointer;font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+
+/* NAV */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:1000;width:100%;box-sizing:border-box;}
+.nav-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-0.5px;}
+.nav-logo span{color:var(--text);}
+.nav-links{display:flex;gap:8px;align-items:center;}
+.nav-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;font-size:13px;font-weight:500;color:var(--text2);transition:all .15s;}
+.nav-btn:hover{background:var(--bg);color:var(--text);}
+.nav-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.nav-btn.primary:hover{background:#c04d26;}
+.nav-user{display:flex;align-items:center;gap:10px;font-size:13px;}
+.nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;}
+.role-badge{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.role-renter{background:#E6F1FB;color:#185FA5;}
+.role-rentee{background:#EAF3DE;color:#3B6D11;}
+.role-admin{background:#FAECE7;color:#993C1D;}
+
+/* NOTIF BELL */
+.notif-btn{position:relative;background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:16px;color:var(--text2);transition:all .15s;}
+.notif-btn:hover{background:var(--bg);}
+.notif-badge{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+/* PAGES */
+.page{display:none;padding:2rem;width:100%;box-sizing:border-box;max-width:1280px;margin-left:auto;margin-right:auto;}
+.page-inner{max-width:1200px;margin:0 auto;width:100%;}
+.page.active{display:block;}
+.page.active{display:block;}
+
+/* AUTH */
+.auth-wrap{min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:2rem;}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;width:100%;max-width:420px;box-shadow:var(--shadow);}
+.auth-title{font-size:26px;font-weight:800;margin-bottom:.25rem;}
+.auth-sub{color:var(--text2);font-size:14px;margin-bottom:2rem;}
+.form-group{margin-bottom:1.25rem;}
+.form-label{display:block;font-size:13px;font-weight:600;margin-bottom:.4rem;color:var(--text2);}
+.form-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);color:var(--text);outline:none;transition:border .15s;}
+.form-input:focus{border-color:var(--accent);}
+select.form-input{cursor:pointer;}
+.btn{padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#c04d26;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{background:var(--border);}
+.btn-danger{background:#fcebeb;color:#A32D2D;border:1px solid #F7C1C1;}
+.btn-danger:hover{background:#f7c1c1;}
+.btn-info{background:#E6F1FB;color:#185FA5;border:1px solid #B5D4F4;}
+.btn-success{background:#EAF3DE;color:#3B6D11;border:1px solid #C0DD97;}
+.btn-warning{background:#FAEEDA;color:#854F0B;border:1px solid #F5D7A3;}
+.btn-full{width:100%;justify-content:center;}
+.auth-switch{text-align:center;margin-top:1.5rem;font-size:13px;color:var(--text2);}
+.auth-switch a{color:var(--accent);text-decoration:none;font-weight:600;}
+
+/* HOME */
+.hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:3rem 2rem;text-align:center;margin-bottom:2rem;}
+.hero h1{font-size:42px;font-weight:800;line-height:1.1;margin-bottom:.75rem;}
+.hero h1 span{color:var(--accent);}
+.hero p{color:var(--text2);font-size:16px;margin-bottom:2rem;max-width:500px;margin-left:auto;margin-right:auto;}
+.search-bar{display:flex;gap:8px;max-width:600px;margin:0 auto;flex-wrap:wrap;}
+.search-bar input{flex:1;min-width:200px;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;background:var(--bg);color:var(--text);}
+.search-bar input:focus{outline:none;border-color:var(--accent);}
+.stats-row{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;}
+.stat-pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:500;color:var(--text2);}
+.stat-pill strong{color:var(--text);}
+
+/* FILTER ROW */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center;}
+.filter-select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);outline:none;}
+.filter-select:focus{border-color:var(--accent);}
+.results-count{margin-left:auto;font-size:13px;color:var(--text2);}
+
+/* DORM GRID */
+.dorm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem;}
+.dorm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.dorm-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+.dorm-img{height:180px;background:linear-gradient(135deg,#E4E1DC,#D5D2CC);display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;overflow:hidden;width:100%;}
+.dorm-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;display:block;}
+.img-upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:2rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);position:relative;}
+.img-upload-area:hover,.img-upload-area.drag-over{border-color:var(--accent);background:#FEF0EB;}
+.img-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.img-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;margin-top:.75rem;}
+.img-preview-item{position:relative;aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);}
+.img-preview-item img{width:100%;height:100%;object-fit:cover;}
+.img-preview-item .remove-img{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.dorm-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.5rem;margin-bottom:1rem;}
+.dorm-gallery img{width:100%;height:80px;object-fit:cover;border-radius:var(--radius-sm);cursor:pointer;transition:transform .15s;display:block;}
+.dorm-gallery img:hover{transform:scale(1.03);}
+.dorm-gallery-main{width:100%;height:auto;max-height:500px;object-fit:contain;border-radius:var(--radius-sm);margin-bottom:.5rem;display:block;background:#000;}
+.dorm-availability{position:absolute;top:10px;right:10px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.avail-yes{background:#EAF3DE;color:#3B6D11;}
+.avail-no{background:#fcebeb;color:#A32D2D;}
+.dorm-body{padding:1rem;}
+.dorm-name{font-weight:700;font-size:15px;margin-bottom:4px;}
+.dorm-addr{font-size:12px;color:var(--text2);margin-bottom:.75rem;display:flex;align-items:center;gap:4px;}
+.dorm-meta{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem;}
+.meta-item{font-size:12px;display:flex;align-items:center;gap:3px;color:var(--text2);}
+.meta-item strong{color:var(--text);font-size:13px;}
+.dorm-price{font-size:20px;font-weight:800;color:var(--accent);}
+.dorm-price span{font-size:12px;color:var(--text2);font-weight:400;}
+.stars{color:#EF9F27;font-size:13px;}
+.tag-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:.5rem;}
+.tag{padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--text2);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.modal{background:var(--surface);border-radius:var(--radius);max-width:700px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-header h2{font-size:18px;}
+.modal-body{padding:1.5rem;}
+.modal-close{background:none;border:none;font-size:20px;color:var(--text2);cursor:pointer;padding:4px 8px;border-radius:4px;}
+.modal-close:hover{background:var(--bg);}
+
+/* MAP */
+#map{height:500px;border-radius:var(--radius);border:1px solid var(--border);}
+.map-wrap{position:relative;}
+.map-legend{position:absolute;bottom:20px;left:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.75rem 1rem;z-index:500;font-size:12px;}
+.legend-item{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.legend-dot{width:10px;height:10px;border-radius:50%;}
+
+/* SECTION HEADERS */
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
+.section-title{font-size:22px;font-weight:800;}
+.page-subtitle{color:var(--text2);font-size:14px;margin-top:.25rem;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:var(--bg);}
+.action-btns{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* DASHBOARD CARDS */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;}
+.dash-num{font-size:28px;font-weight:800;font-family:'Syne',sans-serif;}
+.dash-label{font-size:12px;color:var(--text2);margin-top:4px;}
+.dash-num.accent{color:var(--accent);}
+.dash-num.blue{color:var(--accent2);}
+.dash-num.green{color:var(--green);}
+
+/* TABS */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap;}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;background:none;border:none;color:var(--text2);border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ALERT */
+.alert{padding:12px 16px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:1rem;}
+.alert-success{background:#EAF3DE;color:#3B6D11;border:1px solid #C0DD97;}
+.alert-error{background:#fcebeb;color:#A32D2D;border:1px solid #F7C1C1;}
+.alert-info{background:#E6F1FB;color:#185FA5;border:1px solid #B5D4F4;}
+.alert-warning{background:#FAEEDA;color:#854F0B;border:1px solid #F5D7A3;}
+
+/* REVIEW */
+.review-item{padding:1rem 0;border-bottom:1px solid var(--border);}
+.review-item:last-child{border-bottom:none;}
+.review-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;}
+.review-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent2);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.review-name{font-size:13px;font-weight:600;}
+.review-date{font-size:11px;color:var(--text3);}
+
+/* LOG */
+.log-action{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+.log-login{background:#E6F1FB;color:#185FA5;}
+.log-booking{background:#EAF3DE;color:#3B6D11;}
+.log-dorm{background:#FAEEDA;color:#854F0B;}
+.log-admin{background:#FAECE7;color:#993C1D;}
+.log-delete{background:#fcebeb;color:#A32D2D;}
+.log-review{background:#EEEDFE;color:#534AB7;}
+
+/* EMPTY */
+.empty{text-align:center;padding:4rem 2rem;color:var(--text2);}
+.empty-icon{font-size:48px;margin-bottom:1rem;}
+
+/* CHIP for amenities */
+.amenity-list{display:flex;flex-wrap:wrap;gap:6px;margin:.5rem 0;}
+.amenity{padding:4px 10px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);}
+
+/* LISTING FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:600px){.form-row{grid-template-columns:1fr;}}
+.form-section{margin-bottom:1.5rem;}
+.form-section-title{font-size:14px;font-weight:700;color:var(--text2);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.5px;}
+textarea.form-input{resize:vertical;min-height:80px;}
+.star-select{display:flex;gap:4px;font-size:22px;cursor:pointer;}
+.star-select span{color:var(--border);}
+.star-select span.on{color:#EF9F27;}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:420px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.5rem;background:var(--bg);}
+.chat-bubble{max-width:72%;padding:.65rem 1rem;border-radius:var(--radius);font-size:13px;line-height:1.4;}
+.chat-bubble.mine{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+.chat-bubble.theirs{background:var(--surface);color:var(--text);align-self:flex-start;border:1px solid var(--border);border-bottom-left-radius:4px;}
+.chat-bubble .bubble-meta{font-size:10px;opacity:.65;margin-top:.25rem;}
+.chat-input-row{display:flex;gap:8px;padding:.75rem;border-top:1px solid var(--border);background:var(--surface);}
+.chat-input-row input{flex:1;padding:9px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--bg);outline:none;}
+.chat-input-row input:focus{border-color:var(--accent);}
+
+/* NOTIFICATION PANEL */
+.notif-panel{position:fixed;top:64px;right:1rem;width:360px;max-height:500px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 30px rgba(0,0,0,.15);z-index:3000;display:flex;flex-direction:column;overflow:hidden;}
+.notif-panel-header{padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;}
+.notif-list{overflow-y:auto;flex:1;}
+.notif-item{padding:.75rem 1rem;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;transition:background .1s;display:flex;gap:.75rem;align-items:flex-start;}
+.notif-item:hover{background:var(--bg);}
+.notif-item.unread{background:#FEF8F5;}
+.notif-item.unread:hover{background:#FAF0EB;}
+.notif-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.notif-content{flex:1;}
+.notif-msg{line-height:1.4;color:var(--text);}
+.notif-time{font-size:11px;color:var(--text3);margin-top:3px;}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px;}
+
+/* CHAT LIST */
+.chat-item{display:flex;align-items:center;gap:1rem;padding:.875rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.chat-item:hover{background:var(--bg);}
+.chat-avatar{width:44px;height:44px;border-radius:50%;background:var(--accent2);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chat-info{flex:1;min-width:0;}
+.chat-name{font-weight:600;font-size:14px;margin-bottom:2px;}
+.chat-preview{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chat-meta{text-align:right;flex-shrink:0;}
+.chat-time{font-size:11px;color:var(--text3);}
+.chat-unread{background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:4px;margin-left:auto;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')" style="cursor:pointer;">dormMNL</div>
+  <div class="nav-user" id="nav-user-area"></div>
+</nav>
+
+<!-- NOTIFICATION PANEL (hidden by default) -->
+<div class="notif-panel hidden" id="notif-panel">
+  <div class="notif-panel-header">
+    <span>🔔 Notifications</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" style="font-size:11px;padding:4px 8px;" onclick="markAllNotifsRead()">Mark all read</button>
+      <button style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer;" onclick="toggleNotifPanel()">✕</button>
+    </div>
+  </div>
+  <div class="notif-list" id="notif-list"><div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading...</div></div>
+</div>
+
+<!-- PAGES -->
+<div id="page-home" class="page active"></div>
+<div id="page-login" class="page"></div>
+<div id="page-register" class="page"></div>
+<div id="page-map" class="page"></div>
+<div id="page-dashboard" class="page"></div>
+<div id="page-admin" class="page"></div>
+<div id="page-listing" class="page"></div>
+<div id="page-forgot" class="page"></div>
+<div id="page-reset" class="page"></div>
+<div id="page-chat" class="page"></div>
+<div id="page-notifications" class="page"></div>
+<div id="page-dorm-dash" class="page"></div>
+<div id="page-admin-bin" class="page"></div>
+<div id="page-rentee-dash" class="page"></div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-container"></div>
+
+<script>
+// ============================
+// API CONFIG
+// ============================
+const API = "api";
+
+async function post(endpoint, data) {
+  const res = await fetch(`${API}/${endpoint}`, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+async function get(endpoint, params = {}) {
+  const q = new URLSearchParams(params).toString();
+  const res = await fetch(`${API}/${endpoint}${q ? "?" + q : ""}`);
+  return res.json();
+}
+
+// ============================
+// STATE
+// ============================
+let currentUser = null;
+let searchQuery = "";
+let filterUniversity = "all";
+let filterPrice = "all";
+let filterAvail = "all";
+let mapInstance = null;
+let mapMarkers = [];
+let pendingReview = {dormId:null,rating:0};
+let resetSession = {email:null,code:null};
+let cachedDorms = [];
+let notifPanelOpen = false;
+let notifPollTimer = null;
+let activeChatBookingId = null;
+let chatPollTimer = null;
+
+// ============================
+// HELPERS
+// ============================
+function starsHTML(rating) {
+  let s = "";
+  for (let i = 1; i <= 5; i++) s += `<span style="color:${i <= Math.round(rating) ? '#EF9F27' : '#D3D1C7'}">★</span>`;
+  return s;
+}
+
+function showAlert(msg, type = "success") {
+  const a = document.createElement("div");
+  a.className = `alert alert-${type}`;
+  a.textContent = msg;
+  document.body.appendChild(a);
+  Object.assign(a.style, {position:"fixed",top:"80px",right:"20px",zIndex:"9999",minWidth:"260px",boxShadow:"0 4px 20px rgba(0,0,0,.15)"});
+  setTimeout(() => a.remove(), 3000);
+}
+
+function showLoading(containerId) {
+  const el = document.getElementById(containerId);
+  if (el) el.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--text2)"><div style="font-size:32px;margin-bottom:.75rem">⏳</div><p>Loading...</p></div>`;
+}
+
+function closeModal() { document.getElementById("modal-container").innerHTML = ""; }
+
+function timeAgo(dateStr) {
+  const d = new Date(dateStr);
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs/24)}d ago`;
+}
+
+function initials(name) {
+  return (name||"?").split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase();
+}
+
+// ============================
+// NAV
+// ============================
+function renderNav() {
+  const area = document.getElementById("nav-user-area");
+  if (!currentUser) {
+    area.innerHTML = `<button class="nav-btn" onclick="showPage('login')">Log in</button><button class="nav-btn primary" onclick="showPage('register')">Sign up</button>`;
+  } else {
+    const roleClass = {admin:"role-admin",renter:"role-renter",rentee:"role-rentee"}[currentUser.role] || "role-rentee";
+    area.innerHTML = `
+      <button class="nav-btn" onclick="showPage('home')">🏠 Home</button>
+      <button class="nav-btn" onclick="showPage('map')">🗺 Map</button>
+      ${currentUser.role === "renter" || currentUser.role === "admin" ? `<button class="nav-btn" onclick="showPage('dashboard')">Dashboard</button>` : ""}
+      ${currentUser.role === "rentee" ? `<button class="nav-btn" onclick="showPage('rentee-dash')">My Bookings</button>` : ""}
+      ${currentUser.role === "rentee" ? `<button class="nav-btn" onclick="showPage('chat')">💬 Messages</button>` : ""}
+      ${currentUser.role === "renter" ? `<button class="nav-btn" onclick="showPage('chat')">💬 Messages</button>` : ""}
+      ${currentUser.role === "admin" ? `<button class="nav-btn" onclick="showPage('admin')">Admin</button><button class="nav-btn" onclick="showPage('admin-bin')" style="color:#A32D2D;">🗑 Bin</button>` : ""}
+      <button class="notif-btn" onclick="toggleNotifPanel()" id="notif-bell-btn">🔔<span class="notif-badge hidden" id="notif-badge">0</span></button>
+      <span class="role-badge ${roleClass}">${currentUser.role}</span>
+      <div class="nav-avatar">${initials(currentUser.name)}</div>
+      <button class="nav-btn" onclick="logout()">Logout</button>
+    `;
+    startNotifPolling();
+  }
+}
+
+// ============================
+// PAGE ROUTER
+// ============================
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  const p = document.getElementById("page-" + name);
+  if (p) { p.classList.add("active"); renderPage(name); }
+  // Close notif panel when navigating
+  if (notifPanelOpen) toggleNotifPanel();
+}
+
+function renderPage(name) {
+  if (name === "home")          renderHome();
+  else if (name === "login")    renderLogin();
+  else if (name === "register") renderRegister();
+  else if (name === "map")      renderMap();
+  else if (name === "dashboard") renderDashboard();
+  else if (name === "admin")    renderAdmin();
+  else if (name === "listing")  renderListingForm();
+  else if (name === "forgot")   renderForgot();
+  else if (name === "reset")    renderReset();
+  else if (name === "chat")     renderChatList();
+  else if (name === "notifications") renderNotificationsPage();
+  else if (name === "dorm-dash")    renderDormDashboard();
+  else if (name === "admin-bin")    renderAdminBin();
+  else if (name === "rentee-dash")  renderRenteeDashboard();
+}
+
+// ============================
+// AUTH
+// ============================
+function renderLogin() {
+  document.getElementById("page-login").innerHTML = `
+  <div class="auth-wrap"><div class="auth-card">
+    <h2 class="auth-title">Welcome back</h2>
+    <p class="auth-sub">Sign in to your dormMNL account</p>
+    <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="li-email" type="email" placeholder="your@email.com"/></div>
+    <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="li-pass" type="password" placeholder="••••••••"/></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Sign in</button>
+    <div style="text-align:center;margin-top:.75rem;"><a href="#" onclick="showPage('forgot')" style="font-size:13px;color:var(--accent);text-decoration:none;font-weight:500;">Forgot password?</a></div>
+    <div class="auth-switch">Don't have an account? <a href="#" onclick="showPage('register')">Sign up</a></div>
+    <div style="margin-top:1.5rem;padding:1rem;background:var(--bg);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);">
+      <strong style="color:var(--text);">Demo accounts:</strong><br>
+      admin@dormMNL.ph / password (Admin)<br>
+      maria@example.com / password (Renter)<br>
+      jose@example.com / password (Rentee)
+    </div>
+  </div></div>`;
+}
+
+async function doLogin() {
+  const email = document.getElementById("li-email").value.trim();
+  const pass  = document.getElementById("li-pass").value;
+  if (!email || !pass) { showAlert("Please enter email and password", "error"); return; }
+  try {
+    const data = await post("login.php", {email, password: pass});
+    if (!data.success) { showAlert(data.message, "error"); return; }
+    currentUser = data.user;
+    renderNav();
+    showAlert(`Welcome back, ${currentUser.name}!`);
+    if (currentUser.role === "admin") showPage("admin");
+    else showPage("home");
+  } catch(e) { showAlert("Connection error. Is the server running?", "error"); }
+}
+
+function renderRegister() {
+  document.getElementById("page-register").innerHTML = `
+  <div class="auth-wrap"><div class="auth-card">
+    <h2 class="auth-title">Create account</h2>
+    <p class="auth-sub">Join dormMNL today</p>
+    <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="rg-name" placeholder="Juan Dela Cruz"/></div>
+    <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="rg-email" type="email" placeholder="your@email.com"/></div>
+    <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="rg-pass" type="password" placeholder="••••••••"/></div>
+    <div class="form-group"><label class="form-label">I am a...</label>
+      <select class="form-input" id="rg-role">
+        <option value="rentee">Student (looking for dorm)</option>
+        <option value="renter">Dorm Owner (listing my dorm)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doRegister()">Create account</button>
+    <div class="auth-switch">Already have an account? <a href="#" onclick="showPage('login')">Sign in</a></div>
+  </div></div>`;
+}
+
+async function doRegister() {
+  const name  = document.getElementById("rg-name").value.trim();
+  const email = document.getElementById("rg-email").value.trim();
+  const pass  = document.getElementById("rg-pass").value;
+  const role  = document.getElementById("rg-role").value;
+  if (!name || !email || !pass) { showAlert("Please fill all fields", "error"); return; }
+  try {
+    const data = await post("register.php", {name, email, password: pass, role});
+    if (!data.success) { showAlert(data.message, "error"); return; }
+    currentUser = data.user;
+    renderNav();
+    showAlert(`Account created! Welcome, ${name}!`);
+    showPage("home");
+  } catch(e) { showAlert("Connection error. Is the server running?", "error"); }
+}
+
+function logout() {
+  stopNotifPolling();
+  stopChatPolling();
+  currentUser = null;
+  cachedDorms = [];
+  renderNav();
+  showPage("home");
+}
+
+// ============================
+// FORGOT PASSWORD
+// ============================
+function renderForgot() {
+  document.getElementById("page-forgot").innerHTML = `
+  <div class="auth-wrap"><div class="auth-card">
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="width:56px;height:56px;background:#FAECE7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;font-size:24px;">🔑</div>
+      <h2 class="auth-title">Forgot Password?</h2>
+      <p class="auth-sub">Enter your registered email and we'll send you a reset code.</p>
+    </div>
+    <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" id="fp-email" type="email" placeholder="your@email.com"/></div>
+    <button class="btn btn-primary btn-full" onclick="sendResetCode()">Send Reset Code</button>
+    <div class="auth-switch" style="margin-top:1.25rem;">Remember your password? <a href="#" onclick="showPage('login')">Sign in</a></div>
+  </div></div>`;
+}
+
+async function sendResetCode() {
+  const email = document.getElementById("fp-email").value.trim();
+  if (!email) { showAlert("Please enter your email", "error"); return; }
+  try {
+    const data = await post("forgot.php", {email});
+    if (!data.success) { showAlert(data.message, "error"); return; }
+    resetSession.email = email;
+    resetSession.code  = data.code;
+    document.getElementById("page-forgot").innerHTML = `
+    <div class="auth-wrap"><div class="auth-card">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="width:56px;height:56px;background:#EAF3DE;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;font-size:24px;">📧</div>
+        <h2 class="auth-title">Check Your Email</h2>
+        <p class="auth-sub">We sent a 6-digit code to <strong>${email}</strong></p>
+      </div>
+      <div style="background:var(--bg);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1.5rem;text-align:center;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.5px;">Simulated Email — Your Reset Code</div>
+        <div style="font-size:32px;font-weight:800;letter-spacing:8px;color:var(--accent);font-family:'Syne',sans-serif;">${data.code}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:.5rem;">This code expires in 10 minutes</div>
+      </div>
+      <div class="form-group"><label class="form-label">Enter 6-digit Code</label>
+        <input class="form-input" id="fp-code" type="text" placeholder="e.g. 483921" maxlength="6" style="text-align:center;font-size:20px;font-weight:700;letter-spacing:6px;"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="verifyResetCode()">Verify Code</button>
+      <div class="auth-switch">Back to <a href="#" onclick="showPage('login')">Sign in</a></div>
+    </div></div>`;
+  } catch(e) { showAlert("Connection error. Is the server running?", "error"); }
+}
+
+async function verifyResetCode() {
+  const code = document.getElementById("fp-code").value.trim();
+  if (!code) { showAlert("Please enter the code", "error"); return; }
+  try {
+    const data = await post("verify_code.php", {email: resetSession.email, code});
+    if (!data.success) { showAlert(data.message, "error"); return; }
+    showPage("reset");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+function renderReset() {
+  document.getElementById("page-reset").innerHTML = `
+  <div class="auth-wrap"><div class="auth-card">
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="width:56px;height:56px;background:#EAF3DE;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;font-size:24px;">🔒</div>
+      <h2 class="auth-title">Set New Password</h2>
+      <p class="auth-sub">Choose a strong new password for your account.</p>
+    </div>
+    <div class="form-group"><label class="form-label">New Password</label>
+      <div style="position:relative;">
+        <input class="form-input" id="rp-new" type="password" placeholder="Min. 6 characters" style="padding-right:44px;" oninput="checkPwStrength(this.value)"/>
+        <button onclick="togglePw('rp-new')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;">👁</button>
+      </div>
+    </div>
+    <div id="pw-strength-bar" style="height:4px;border-radius:2px;background:var(--border);margin-bottom:.5rem;overflow:hidden;"><div id="pw-strength-fill" style="height:100%;width:0;transition:width .3s,background .3s;border-radius:2px;"></div></div>
+    <div id="pw-strength-label" style="font-size:12px;color:var(--text2);margin-bottom:1rem;min-height:16px;"></div>
+    <div class="form-group"><label class="form-label">Confirm New Password</label>
+      <div style="position:relative;">
+        <input class="form-input" id="rp-confirm" type="password" placeholder="Re-enter new password" style="padding-right:44px;"/>
+        <button onclick="togglePw('rp-confirm')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;">👁</button>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doResetPassword()">Reset Password</button>
+    <div class="auth-switch">Back to <a href="#" onclick="showPage('login')">Sign in</a></div>
+  </div></div>`;
+}
+
+function togglePw(id) { const i = document.getElementById(id); i.type = i.type === "password" ? "text" : "password"; }
+
+function checkPwStrength(pw) {
+  const fill = document.getElementById("pw-strength-fill");
+  const label = document.getElementById("pw-strength-label");
+  if (!fill || !label) return;
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const levels = [
+    {pct:0,color:"transparent",text:""},
+    {pct:20,color:"#E24B4A",text:"Weak"},
+    {pct:40,color:"#EF9F27",text:"Fair"},
+    {pct:60,color:"#EF9F27",text:"Good"},
+    {pct:80,color:"#639922",text:"Strong"},
+    {pct:100,color:"#639922",text:"Very Strong"},
+  ];
+  const lvl = levels[score] || levels[0];
+  fill.style.width = lvl.pct + "%";
+  fill.style.background = lvl.color;
+  label.textContent = lvl.text ? `Password strength: ${lvl.text}` : "";
+  label.style.color = lvl.color;
+}
+
+async function doResetPassword() {
+  const np = document.getElementById("rp-new").value;
+  const cp = document.getElementById("rp-confirm").value;
+  if (!np || !cp) { showAlert("Please fill both fields", "error"); return; }
+  if (np.length < 6) { showAlert("Password must be at least 6 characters", "error"); return; }
+  if (np !== cp) { showAlert("Passwords do not match", "error"); return; }
+  try {
+    const data = await post("reset.php", {email: resetSession.email, code: resetSession.code, password: np});
+    if (!data.success) { showAlert(data.message, "error"); return; }
+    resetSession = {email: null, code: null};
+    showAlert("Password reset successfully! Please sign in.");
+    showPage("login");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// NOTIFICATIONS
+// ============================
+const notifIcons = {
+  new_booking:       "📋",
+  booking_approved:  "✅",
+  booking_rejected:  "❌",
+  booking_confirmed: "🤝",
+  new_review:        "⭐",
+  new_message:       "💬",
+  dorm_approved:     "🏠",
+  dorm_rejected:     "🚫",
+  tenant_vacated:    "🚪",
+  vacated_confirmed: "👋",
+  inactive_notice:   "⚠️",
+  admin_message:     "📧",
+  info:              "ℹ️",
+};
+
+function startNotifPolling() {
+  if (!currentUser) return;
+  loadNotifCount();
+  notifPollTimer = setInterval(loadNotifCount, 15000);
+}
+
+function stopNotifPolling() {
+  if (notifPollTimer) { clearInterval(notifPollTimer); notifPollTimer = null; }
+}
+
+async function loadNotifCount() {
+  if (!currentUser) return;
+  try {
+    const data = await get("notifications.php", {action:"unread_count", user_id: currentUser.id});
+    const badge = document.getElementById("notif-badge");
+    if (!badge) return;
+    const count = data.count || 0;
+    if (count > 0) {
+      badge.textContent = count > 99 ? "99+" : count;
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  } catch(e) {}
+}
+
+function toggleNotifPanel() {
+  notifPanelOpen = !notifPanelOpen;
+  const panel = document.getElementById("notif-panel");
+  if (notifPanelOpen) {
+    panel.classList.remove("hidden");
+    loadNotifPanel();
+  } else {
+    panel.classList.add("hidden");
+  }
+}
+
+async function loadNotifPanel() {
+  const list = document.getElementById("notif-list");
+  list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading...</div>`;
+  try {
+    const notifs = await get("notifications.php", {action:"list", user_id: currentUser.id, limit:30});
+    if (!notifs.length) {
+      list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">🔕 No notifications yet</div>`;
+      return;
+    }
+    list.innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.is_read==0?'unread':''}" onclick="handleNotifClick(${n.id},${n.related_id||0},'${n.type}')">
+      <div class="notif-icon">${notifIcons[n.type]||"🔔"}</div>
+      <div class="notif-content">
+        <div class="notif-msg">${n.message}</div>
+        <div class="notif-time">${timeAgo(n.created_at)}</div>
+      </div>
+      ${n.is_read==0?`<div class="notif-dot"></div>`:''}
+    </div>`).join("");
+  } catch(e) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">Could not load notifications.</div>`;
+  }
+}
+
+async function handleNotifClick(notifId, relatedId, type) {
+  // Mark as read
+  await post("notifications.php?action=mark_read", {user_id: currentUser.id, id: notifId}).catch(()=>{});
+  loadNotifCount();
+  toggleNotifPanel();
+
+  // Navigate to relevant page
+  if (type === "new_message" || type === "booking_approved" || type === "booking_confirmed") {
+    if (relatedId) openChat(relatedId);
+    else showPage("chat");
+  } else if (type === "admin_message") {
+    showPage("chat"); // renters see admin messages in chat area
+  } else if (type === "inactive_notice") {
+    showPage("dashboard");
+  } else if (type === "new_booking" || type === "tenant_vacated") {
+    showPage("dashboard");
+  } else if (type === "new_review") {
+    showPage("dashboard");
+  } else if (type === "dorm_approved" || type === "dorm_rejected") {
+    showPage("dashboard");
+  } else if (type === "vacated_confirmed") {
+    showPage("home");
+  }
+}
+
+async function markAllNotifsRead() {
+  await post("notifications.php?action=mark_read", {user_id: currentUser.id}).catch(()=>{});
+  loadNotifCount();
+  loadNotifPanel();
+}
+
+async function renderNotificationsPage() {
+  if (!currentUser) { showPage("login"); return; }
+  const p = document.getElementById("page-notifications");
+  p.innerHTML = `
+  <div class="section-header">
+    <div><div class="section-title">🔔 Notifications</div><div class="page-subtitle">All your recent activity</div></div>
+    <button class="btn btn-secondary" onclick="markAllNotifsRead()">Mark all read</button>
+  </div>
+  <div id="notif-page-list"><div style="text-align:center;padding:3rem;color:var(--text2)">⏳ Loading...</div></div>`;
+  try {
+    const notifs = await get("notifications.php", {action:"list", user_id: currentUser.id, limit:50});
+    const el = document.getElementById("notif-page-list");
+    if (!notifs.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">🔕</div><p>No notifications yet.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    ${notifs.map(n=>`
+    <div class="notif-item ${n.is_read==0?'unread':''}" onclick="handleNotifClick(${n.id},${n.related_id||0},'${n.type}')">
+      <div class="notif-icon">${notifIcons[n.type]||"🔔"}</div>
+      <div class="notif-content">
+        <div class="notif-msg">${n.message}</div>
+        <div class="notif-time">${timeAgo(n.created_at)}</div>
+      </div>
+      ${n.is_read==0?`<div class="notif-dot"></div>`:''}
+    </div>`).join("")}
+    </div>`;
+  } catch(e) {}
+}
+
+// ============================
+// CHAT
+// ============================
+function stopChatPolling() {
+  if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+}
+
+async function renderChatList() {
+  if (!currentUser) { showPage("login"); return; }
+  stopChatPolling();
+  const p = document.getElementById("page-chat");
+  p.innerHTML = `
+  <div class="section-header">
+    <div><div class="section-title">💬 Messages</div><div class="page-subtitle">Chat with approved tenants or dorm owners</div></div>
+  </div>
+  <div id="chat-list-wrap"><div style="text-align:center;padding:3rem;color:var(--text2)">⏳ Loading chats...</div></div>`;
+
+  try {
+    const chats = await get("chat.php", {action:"my_chats", user_id: currentUser.id});
+    const wrap = document.getElementById("chat-list-wrap");
+
+    // For renters: always show admin messages section (so they can initiate contact)
+    let adminMsgHTML = "";
+    if (currentUser.role === "renter") {
+      try {
+        const adminMsgs = await get("admin_messages.php", {action:"list", renter_id: currentUser.id});
+        const latestMsg = adminMsgs.length ? adminMsgs[adminMsgs.length - 1] : null;
+        const unread = adminMsgs.filter(m => m.is_read == 0).length;
+        adminMsgHTML = `
+        <div style="margin-bottom:1.5rem;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:.5rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;">📧 Admin Messages</div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+            <div class="chat-item" onclick="openAdminMsgThread()">
+              <div class="chat-avatar" style="background:var(--accent);">A</div>
+              <div class="chat-info">
+                <div class="chat-name">dormMNL Admin</div>
+                <div class="chat-preview">${latestMsg ? (latestMsg.message||"No messages") : "Send a message to admin"}</div>
+              </div>
+              <div class="chat-meta">
+                <div class="chat-time">${latestMsg ? timeAgo(latestMsg.created_at) : ""}</div>
+                ${unread>0?`<div class="chat-unread">${unread}</div>`:""}
+              </div>
+            </div>
+          </div>
+        </div>`;
+      } catch(e) {
+        adminMsgHTML = `
+        <div style="margin-bottom:1.5rem;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:.5rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;">📧 Admin Messages</div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+            <div class="chat-item" onclick="openAdminMsgThread()">
+              <div class="chat-avatar" style="background:var(--accent);">A</div>
+              <div class="chat-info"><div class="chat-name">dormMNL Admin</div><div class="chat-preview">Contact admin</div></div>
+            </div>
+          </div>
+        </div>`;
+      }
+    }
+
+    if (!chats.length && !adminMsgHTML) {
+      wrap.innerHTML = `<div class="empty"><div class="empty-icon">💬</div><p>No active chats yet.<br><small style="color:var(--text3);">Chats are unlocked once a booking is approved.</small></p></div>`;
+      return;
+    }
+
+    const dormChatsHTML = chats.length ? `
+    <div style="margin-bottom:1rem;">
+      ${chats.length ? `<div style="font-size:13px;font-weight:700;margin-bottom:.5rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;">🏠 Dorm Chats</div>` : ""}
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      ${chats.map(c => {
+        const av = initials(c.other_user_name || "?");
+        return `<div class="chat-item" onclick="openChat(${c.booking_id})">
+          <div class="chat-avatar">${av}</div>
+          <div class="chat-info">
+            <div class="chat-name">${c.other_user_name||"User"} <span style="font-size:11px;color:var(--text2);font-weight:400">• ${c.dorm_name||""}</span></div>
+            <div class="chat-preview">${c.last_message||"No messages yet"}</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">${c.last_message_time ? timeAgo(c.last_message_time) : ""}</div>
+            ${parseInt(c.unread_count)>0?`<div class="chat-unread">${c.unread_count}</div>`:""}
+          </div>
+        </div>`;
+      }).join("")}
+      </div>
+    </div>` : "";
+
+    wrap.innerHTML = adminMsgHTML + dormChatsHTML;
+  } catch(e) {
+    document.getElementById("chat-list-wrap").innerHTML = `<div class="alert alert-error">Could not load chats. Check server connection.</div>`;
+  }
+}
+
+async function openAdminMsgThread() {
+  if (!currentUser) return;
+  document.getElementById("modal-container").innerHTML = `
+  <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div>
+        <h2>📧 Admin Messages</h2>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">Messages from dormMNL administration</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div class="chat-wrap">
+        <div class="chat-messages" id="admin-msg-thread"><div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading...</div></div>
+        <div class="chat-input-row">
+          <input type="text" id="admin-reply-input" class="form-input" placeholder="Type a message to admin..." onkeydown="if(event.key==='Enter')sendAdminReply()"/>
+          <button class="btn btn-primary" style="padding:9px 16px;" onclick="sendAdminReply()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div></div>`;
+
+  await loadAdminMsgThread();
+  await post("admin_messages.php", {action: "mark_read", renter_id: currentUser.id}).catch(()=>{});
+  loadNotifCount();
+}
+
+async function loadAdminMsgThread() {
+  const box = document.getElementById("admin-msg-thread");
+  if (!box) return;
+  try {
+    const msgs = await get("admin_messages.php", {action:"conversation_renter", renter_id: currentUser.id});
+    if (!msgs || !msgs.length) {
+      box.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px;">No messages yet. Send a message to the admin below.</div>`;
+      return;
+    }
+    box.innerHTML = msgs.map(m => {
+      const isMine = m.sent_by == currentUser.id;
+      const t = m.created_at ? new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) : "";
+      return `<div class="chat-bubble ${isMine ? 'mine' : 'theirs'}" style="max-width:80%;">
+        ${!isMine ? `<div style="font-size:10px;font-weight:600;opacity:.7;margin-bottom:3px;">${m.admin_name||"Admin"}</div>` : ""}
+        ${m.message}
+        <div class="bubble-meta">${t}</div>
+      </div>`;
+    }).join("");
+    box.scrollTop = box.scrollHeight;
+  } catch(e) {
+    if (box) box.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">Could not load messages.</div>`;
+  }
+}
+
+async function sendAdminReply() {
+  const input = document.getElementById("admin-reply-input");
+  if (!input) return;
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+  try {
+    const data = await post("admin_messages.php", {action: "send_renter", renter_id: currentUser.id, message: msg});
+    if (!data.success) { showAlert(data.message || "Failed to send", "error"); return; }
+    await loadAdminMsgThread();
+  } catch(e) { showAlert("Connection error sending message.", "error"); }
+}
+
+async function openChat(bookingId) {
+  activeChatBookingId = bookingId;
+  stopChatPolling();
+
+  // Get booking details
+  let bookingInfo = null;
+  try {
+    const myBookings = await get("bookings.php", {action:"list", user_id: currentUser.id});
+    const ownerBookings = currentUser.role === "renter" ? await get("bookings.php", {action:"list", owner_id: currentUser.id}) : [];
+    bookingInfo = [...myBookings, ...ownerBookings].find(b => b.id == bookingId);
+  } catch(e) {}
+
+  const dormName = bookingInfo ? (bookingInfo.dorm_name || "Dorm Chat") : "Dorm Chat";
+
+  document.getElementById("modal-container").innerHTML = `
+  <div class="modal-overlay" onclick="if(event.target===this){closeModal();stopChatPolling();}">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div>
+        <h2>💬 ${dormName}</h2>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">Booking #${bookingId} · Approved</div>
+      </div>
+      <button class="modal-close" onclick="closeModal();stopChatPolling()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-messages-box"><div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading...</div></div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMsg(${bookingId})"/>
+          <button class="btn btn-primary" style="padding:9px 16px;" onclick="sendChatMsg(${bookingId})">Send</button>
+        </div>
+      </div>
+    </div>
+  </div></div>`;
+
+  await loadChatMessages(bookingId);
+  // Mark messages as read
+  post("chat.php", {action: "mark_read", booking_id: bookingId, user_id: currentUser.id}).catch(()=>{});
+  loadNotifCount();
+  // Poll for new messages every 5 seconds
+  chatPollTimer = setInterval(() => loadChatMessages(bookingId), 5000);
+}
+
+async function loadChatMessages(bookingId) {
+  try {
+    const msgs = await get("chat.php", {action:"messages", booking_id: bookingId, user_id: currentUser.id});
+    const box = document.getElementById("chat-messages-box");
+    if (!box) { stopChatPolling(); return; }
+    if (!msgs || msgs.error || (msgs.success === false)) {
+      box.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">Could not load messages.<br><small>${msgs.message||""}</small></div>`;
+      return;
+    }
+    const wasAtBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 40;
+    if (!msgs.length) {
+      box.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">No messages yet. Say hi! 👋</div>`;
+      return;
+    }
+    box.innerHTML = msgs.map(m => {
+      const mine = m.sender_id == currentUser.id;
+      const t = m.created_at ? new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) : "";
+      return `<div class="chat-bubble ${mine?'mine':'theirs'}">
+        ${!mine ? `<div style="font-size:10px;font-weight:600;opacity:.7;margin-bottom:3px;">${m.sender_name}</div>` : ""}
+        ${m.message}
+        <div class="bubble-meta">${t}</div>
+      </div>`;
+    }).join("");
+    if (wasAtBottom) box.scrollTop = box.scrollHeight;
+  } catch(e) {}
+}
+
+async function sendChatMsg(bookingId) {
+  const input = document.getElementById("chat-input");
+  if (!input) return;
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+  try {
+    const data = await post("chat.php", {action: "send", booking_id: bookingId, sender_id: currentUser.id, message: msg});
+    if (!data.success) { showAlert(data.message || "Failed to send", "error"); return; }
+    await loadChatMessages(bookingId);
+    const box = document.getElementById("chat-messages-box");
+    if (box) box.scrollTop = box.scrollHeight;
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// HOME
+// ============================
+async function renderHome() {
+  const p = document.getElementById("page-home");
+  const unis = ["UST","PLM","DLSU","FEU","Mapua","PUP"];
+  p.innerHTML = `
+  <div class="hero">
+    <h1>Find Your Perfect <span>Dorm in Manila</span></h1>
+    <p>Affordable, safe, and conveniently located dorms near your university. Verified listings, real reviews.</p>
+    <div class="search-bar">
+      <input type="text" placeholder="Search dorms, address, or university..." id="search-input" value="${searchQuery}" oninput="searchQuery=this.value"/>
+      <button class="btn btn-primary" onclick="renderHome()">Search</button>
+    </div>
+  </div>
+  <div class="filters">
+    <select class="filter-select" onchange="filterUniversity=this.value;renderHome()">
+      <option value="all">All Universities</option>
+      ${unis.map(u => `<option value="${u}" ${filterUniversity===u?"selected":""}>${u}</option>`).join("")}
+    </select>
+    <select class="filter-select" onchange="filterPrice=this.value;renderHome()">
+      <option value="all">All Prices</option>
+      <option value="low"  ${filterPrice==="low" ?"selected":""}>Under ₱3,500</option>
+      <option value="mid"  ${filterPrice==="mid" ?"selected":""}>₱3,500 – ₱5,000</option>
+      <option value="high" ${filterPrice==="high"?"selected":""}>Above ₱5,000</option>
+    </select>
+    <select class="filter-select" onchange="filterAvail=this.value;renderHome()">
+      <option value="all">All Availability</option>
+      <option value="yes" ${filterAvail==="yes"?"selected":""}>Available</option>
+      <option value="no"  ${filterAvail==="no" ?"selected":""}>Full</option>
+    </select>
+    <button class="btn btn-secondary" onclick="showPage('map')">🗺 View Map</button>
+    ${currentUser && currentUser.role === "renter" ? `<button class="btn btn-primary" onclick="showPage('listing')">+ Add Listing</button>` : ""}
+  </div>
+  <div id="dorm-list"><div style="text-align:center;padding:3rem;color:var(--text2)">⏳ Loading dorms...</div></div>`;
+
+  const params = {action:"list"};
+  if (filterUniversity !== "all") params.university = filterUniversity;
+  if (filterAvail !== "all") params.available = filterAvail;
+  if (filterPrice === "low")  { params.min_price = 0;    params.max_price = 3499; }
+  if (filterPrice === "mid")  { params.min_price = 3500; params.max_price = 5000; }
+  if (filterPrice === "high") { params.min_price = 5001; params.max_price = 999999; }
+  if (searchQuery) params.search = searchQuery;
+
+  try {
+    const dorms = await get("dorms.php", params);
+    cachedDorms = dorms;
+    const list  = document.getElementById("dorm-list");
+    if (!dorms.length) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">🏠</div><p>No dorms found. Try adjusting your filters.</p></div>`;
+      return;
+    }
+    list.innerHTML = `<div style="font-size:13px;color:var(--text2);margin-bottom:1rem;">${dorms.length} result${dorms.length!==1?"s":""}</div><div class="dorm-grid">${dorms.map(d => dormCardHTML(d)).join("")}</div>`;
+  } catch(e) {
+    document.getElementById("dorm-list").innerHTML = `<div class="alert alert-error">Could not load dorms. Make sure your PHP server is running and database is set up.</div>`;
+  }
+}
+
+function dormCardHTML(d) {
+  const rating   = parseFloat(d.avg_rating) || 0;
+  const reviews  = parseInt(d.review_count) || 0;
+  const icons    = ["🏠","🏡","🏢","🏗️","🏘️"];
+  const amenities = Array.isArray(d.amenities) ? d.amenities : (d.amenities ? d.amenities.split(",") : []);
+  const images   = Array.isArray(d.images) && d.images.length ? d.images : null;
+  const imgHTML  = images
+    ? `<img src="${images[0]}" alt="${d.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" onerror="this.style.display='none'">`
+    : `<span style="font-size:40px;">${icons[d.id % icons.length]}</span>`;
+  return `<div class="dorm-card" onclick="showDormModal(${d.id})">
+  <div class="dorm-img">
+    ${imgHTML}
+    ${images && images.length > 1 ? `<span style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px;">📷 ${images.length} photos</span>` : ""}
+    <span class="dorm-availability ${d.availability > 0 ? 'avail-yes' : 'avail-no'}" style="position:absolute;top:10px;right:10px;">${d.availability > 0 ? d.availability + " slots" : "Full"}</span>
+  </div>
+  <div class="dorm-body">
+    <div class="dorm-name">${d.name}</div>
+    <div class="dorm-addr">📍 ${d.address}</div>
+    <div class="dorm-meta">
+      <div class="meta-item">${starsHTML(rating)} <strong>${rating.toFixed(1)}</strong> (${reviews})</div>
+      <div class="meta-item">🎓 <strong>${d.university}</strong></div>
+    </div>
+    <div class="tag-row">${amenities.slice(0,3).map(a=>`<span class="tag">${a}</span>`).join("")}${amenities.length>3?`<span class="tag">+${amenities.length-3}</span>`:""}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:.75rem;">
+      <div class="dorm-price">₱${parseFloat(d.price).toLocaleString()}<span>/mo</span></div>
+      <span style="font-size:12px;color:var(--text2);">Near ${d.university}</span>
+    </div>
+  </div></div>`;
+}
+
+async function showDormModal(id) {
+  document.getElementById("modal-container").innerHTML = `
+  <div class="modal-overlay"><div class="modal"><div class="modal-body" style="text-align:center;padding:3rem;color:var(--text2)">⏳ Loading...</div></div></div>`;
+
+  try {
+    const [dorm, reviews] = await Promise.all([
+      get("dorms.php", {action:"get", id}),
+      get("reviews.php", {action:"list", dorm_id:id})
+    ]);
+    const rating = reviews.length ? (reviews.reduce((a,r) => a+parseInt(r.rating),0)/reviews.length).toFixed(1) : 0;
+    const amenities = Array.isArray(dorm.amenities) ? dorm.amenities : (dorm.amenities ? dorm.amenities.split(",") : []);
+    const images = Array.isArray(dorm.images) ? dorm.images : [];
+    const userBooking = currentUser ? await get("bookings.php", {action:"list", user_id:currentUser.id}).then(bs => bs.find(b => b.dorm_id == id)) : null;
+    const isOwner = currentUser && currentUser.id == dorm.owner_id;
+    const icons = ["🏠","🏡","🏢","🏗️","🏘️"];
+
+    // Build photo gallery HTML
+    const galleryHTML = images.length > 0
+      ? `<div style="margin-bottom:1rem;">
+          <img src="${images[0]}" id="modal-main-img" class="dorm-gallery-main" alt="${dorm.name}" onerror="this.src=''">
+          ${images.length > 1 ? `<div class="dorm-gallery">${images.map((img,i)=>`<img src="${img}" onclick="document.getElementById('modal-main-img').src='${img}'" alt="Photo ${i+1}" onerror="this.style.display='none'">`).join("")}</div>` : ""}
+        </div>`
+      : `<div style="text-align:center;font-size:64px;padding:1rem;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:1rem;">${icons[dorm.id%icons.length]}</div>`;
+
+    document.getElementById("modal-container").innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>${dorm.name}</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        ${galleryHTML}
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+          <div style="flex:1;min-width:200px;">
+            <p style="font-size:14px;color:var(--text2);margin-bottom:.5rem;">📍 ${dorm.address}</p>
+            <p style="font-size:14px;color:var(--text2);margin-bottom:.5rem;">🎓 Near ${dorm.university}</p>
+            <p style="font-size:14px;color:var(--text2);margin-bottom:.75rem;">${dorm.description}</p>
+            <div class="amenity-list">${amenities.map(a=>`<span class="amenity">✓ ${a}</span>`).join("")}</div>
+          </div>
+          <div style="min-width:160px;background:var(--bg);border-radius:var(--radius-sm);padding:1rem;text-align:center;">
+            <div style="font-size:32px;font-weight:800;color:var(--accent);">₱${parseFloat(dorm.price).toLocaleString()}</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:.75rem;">per month</div>
+            <div style="margin-bottom:.5rem;">${starsHTML(rating)}</div>
+            <div style="font-size:14px;font-weight:600;">${rating} / 5.0</div>
+            <div style="font-size:12px;color:var(--text2);">${reviews.length} review${reviews.length!==1?"s":""}</div>
+            <div style="margin-top:.75rem;font-size:13px;font-weight:600;color:${dorm.availability>0?"var(--green)":"#A32D2D"};">${dorm.availability>0?dorm.availability+" slots available":"No slots available"}</div>
+          </div>
+        </div>
+        ${!isOwner ? `
+          ${!currentUser ? `<div class="alert alert-info">Please <a href="#" onclick="closeModal();showPage('login')">sign in</a> to book this dorm.</div>`
+          : userBooking && userBooking.status === "approved" ?
+            `<div class="alert alert-success">✅ Your booking is <strong>approved</strong>!
+             <button class="btn btn-info" style="margin-left:1rem;font-size:12px;padding:5px 12px;" onclick="closeModal();openChat(${userBooking.id})">💬 Open Chat</button>
+             <button class="btn btn-warning" style="margin-left:6px;font-size:12px;padding:5px 12px;" onclick="doVacate(${userBooking.id})">🚪 Vacate</button>
+            </div>`
+          : userBooking && userBooking.status === "pending" ?
+            `<div class="alert alert-info" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+              <span>⏳ Your booking request is <strong>pending</strong> review.</span>
+              <button class="btn btn-danger" style="font-size:12px;padding:5px 12px;" onclick="doCancelBooking(${userBooking.id})">✕ Cancel Application</button>
+             </div>`
+          : userBooking && userBooking.status === "rejected" ?
+            `<div class="alert alert-error">Your booking was rejected. You may try another dorm.</div>`
+          : dorm.availability > 0 ? `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;">
+              <div class="form-section-title">Book this Dorm</div>
+              <textarea class="form-input" id="book-msg" placeholder="Tell the owner about yourself..." style="margin-bottom:.75rem;"></textarea>
+              <button class="btn btn-primary" onclick="doBooking(${id})">Send Booking Request</button>
+            </div>`
+          : `<div class="alert alert-error">This dorm is currently full.</div>`}
+        ` : `<div class="alert alert-info">This is your listing. <a href="#" onclick="closeModal();showPage('dashboard')">Manage it from your Dashboard</a>.</div>`}
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:.5rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+            <strong>Reviews (${reviews.length})</strong>
+            ${currentUser && currentUser.role==="rentee" && !reviews.find(r=>r.user_id==currentUser.id) && userBooking && (userBooking.status === "approved" || userBooking.status === "vacated") ?
+              `<button class="btn btn-secondary" onclick="showReviewForm(${id})" style="font-size:12px;padding:6px 12px;">✍️ Write a Review</button>`
+              : currentUser && currentUser.role==="rentee" && !reviews.find(r=>r.user_id==currentUser.id) ?
+              `<span style="font-size:12px;color:var(--text3);font-style:italic;">Only current or former tenants can review</span>` : ""}
+          </div>
+          ${reviews.length ? reviews.map(r=>`
+          <div class="review-item">
+            <div class="review-header">
+              <div class="review-avatar">${initials(r.user_name)}</div>
+              <span class="review-name">${r.user_name}</span>
+              <span style="margin-left:auto;">${starsHTML(r.rating)}</span>
+              <span class="review-date">${r.created_at}</span>
+            </div>
+            <p style="font-size:13px;color:var(--text2);">${r.comment}</p>
+          </div>`).join("") : `<p style="color:var(--text2);font-size:13px;">No reviews yet. Be the first!</p>`}
+          <div id="review-form-area"></div>
+        </div>
+      </div>
+    </div></div>`;
+  } catch(e) { closeModal(); showAlert("Error loading dorm details", "error"); }
+}
+
+async function doBooking(dormId) {
+  if (!currentUser) { showAlert("Please sign in", "error"); return; }
+  const msg = document.getElementById("book-msg") ? document.getElementById("book-msg").value : "";
+  try {
+    const data = await post("bookings.php?action=add", {user_id: currentUser.id, dorm_id: dormId, message: msg});
+    if (!data.success) { showAlert(data.message, "error"); return; }
+    showAlert("Booking request sent! The owner will respond soon.");
+    closeModal();
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function doCancelBooking(bookingId) {
+  if (!confirm("Cancel your booking application for this dorm? You can apply to another dorm afterwards.")) return;
+  try {
+    const data = await post("bookings.php?action=update", {id: bookingId, status: "cancelled", user_id: currentUser.id});
+    if (!data.success) { showAlert(data.message || "Could not cancel booking.", "error"); return; }
+    showAlert("Booking cancelled. You can now apply to another dorm.");
+    closeModal();
+    // Refresh whichever page is active
+    const renteeActive = document.getElementById("page-rentee-dash")?.classList.contains("active");
+    if (renteeActive) renderRenteeDashboard();
+    else renderHome();
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function doVacate(bookingId) {
+  if (!confirm("Are you sure you want to vacate this dorm? This will free up your slot.")) return;
+  try {
+    const data = await post("bookings.php?action=update", {id: bookingId, status: "vacated", user_id: currentUser.id, owner_id: currentUser.id});
+    if (!data.success) { showAlert(data.message || "Error", "error"); return; }
+    showAlert("You have successfully vacated. The slot is now available for others.");
+    closeModal();
+    // Refresh whichever page is active
+    const renteeActive = document.getElementById("page-rentee-dash")?.classList.contains("active");
+    if (renteeActive) renderRenteeDashboard();
+    else renderHome();
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+function showReviewForm(dormId) {
+  pendingReview = {dormId, rating: 0};
+  document.getElementById("review-form-area").innerHTML = `
+  <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-top:.75rem;">
+    <div class="form-section-title">Your Review</div>
+    <div class="star-select" id="star-picker">${[1,2,3,4,5].map(i=>`<span onclick="setRating(${i})" id="star-${i}">★</span>`).join("")}</div>
+    <textarea class="form-input" id="review-text" placeholder="Share your experience..." style="margin:.75rem 0;"></textarea>
+    <button class="btn btn-primary" style="font-size:13px;padding:8px 16px;" onclick="submitReview(${dormId})">Submit Review</button>
+  </div>`;
+}
+
+function setRating(n) {
+  pendingReview.rating = n;
+  for (let i = 1; i <= 5; i++) document.getElementById("star-"+i).className = i <= n ? "on" : "";
+}
+
+async function submitReview(dormId) {
+  if (!pendingReview.rating) { showAlert("Please select a rating", "error"); return; }
+  const text = document.getElementById("review-text").value.trim();
+  if (!text) { showAlert("Please write a comment", "error"); return; }
+  try {
+    const data = await post("reviews.php?action=add", {user_id: currentUser.id, dorm_id: dormId, rating: pendingReview.rating, comment: text});
+    if (!data.success) { showAlert(data.message, "error"); return; }
+    showAlert("Review submitted! Thank you.");
+    showDormModal(dormId);
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// MAP
+// ============================
+async function renderMap() {
+  document.getElementById("page-map").innerHTML = `
+  <div class="section-header"><div><div class="section-title">📍 Dorm Map – Manila</div><div class="page-subtitle">Browse dorms near universities. Click a pin for details.</div></div></div>
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+    <select class="filter-select" onchange="filterMapByUniv(this.value)">
+      <option value="all">All Universities</option>
+      <option value="UST">UST</option><option value="PLM">PLM</option><option value="DLSU">DLSU</option>
+      <option value="FEU">FEU</option><option value="Mapua">Mapua</option>
+    </select>
+  </div>
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#D85A30"></div> Dorm (available)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#888780"></div> Dorm (full)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#185FA5"></div> University</div>
+    </div>
+  </div>`;
+  setTimeout(async () => {
+    if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+    const m = L.map("map").setView([14.5950, 120.9850], 14);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {attribution:"© OpenStreetMap"}).addTo(m);
+    mapInstance = m;
+    const univs = [{name:"UST",lat:14.6103,lng:120.9890},{name:"PLM",lat:14.5800,lng:120.9840},{name:"DLSU",lat:14.5640,lng:120.9935},{name:"FEU",lat:14.6001,lng:120.9869},{name:"Mapua",lat:14.5950,lng:120.9827}];
+    univs.forEach(u => {
+      const icon = L.divIcon({html:`<div style="background:#185FA5;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3)">${u.name}</div>`,className:"",iconAnchor:[20,10]});
+      L.marker([u.lat, u.lng], {icon}).addTo(m);
+    });
+    try {
+      const dorms = await get("dorms.php", {action:"list"});
+      dorms.forEach(d => {
+        const color = d.availability > 0 ? "#D85A30" : "#888780";
+        const rating = parseFloat(d.avg_rating) || 0;
+        const icon = L.divIcon({html:`<div style="background:${color};color:#fff;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer">₱${(d.price/1000).toFixed(1)}k ${starsHTML(rating)}</div>`,className:"",iconAnchor:[40,14]});
+        L.marker([d.lat, d.lng], {icon}).addTo(m).bindPopup(`<div style="min-width:180px;font-family:sans-serif"><strong>${d.name}</strong><br><small>${d.address}</small><br><br><span style="color:#D85A30;font-weight:700;font-size:15px">₱${parseFloat(d.price).toLocaleString()}/mo</span><br>${starsHTML(rating)} ${rating}<br><br><span style="color:${d.availability>0?"#3B6D11":"#A32D2D"};font-weight:600">${d.availability>0?d.availability+" slots available":"Full"}</span><br><br><a href="#" onclick="closeModal();showDormModal(${d.id});return false" style="color:#D85A30;font-weight:600">View Details →</a></div>`);
+      });
+    } catch(e) {}
+  }, 100);
+}
+
+function filterMapByUniv(univ) {
+  if (!mapInstance) return;
+  const c = {all:[14.5950,120.9850,14],UST:[14.6103,120.9890,15],PLM:[14.5800,120.9840,15],DLSU:[14.5640,120.9935,15],FEU:[14.6001,120.9869,15],Mapua:[14.5950,120.9827,15]}[univ] || [14.5950,120.9850,14];
+  mapInstance.setView([c[0],c[1]],c[2]);
+}
+
+// ============================
+// DASHBOARD (Renter)
+// ============================
+async function renderDashboard() {
+  if (!currentUser || currentUser.role === "rentee") { showPage("home"); return; }
+  const p = document.getElementById("page-dashboard");
+  p.innerHTML = `<div class="section-header"><div><div class="section-title">Renter Dashboard</div><div class="page-subtitle">Manage your listings and bookings</div></div><button class="btn btn-primary" onclick="showPage('listing')">+ New Listing</button></div><div id="dash-content"><div style="text-align:center;padding:3rem;color:var(--text2)">⏳ Loading...</div></div>`;
+
+  try {
+    const [myDorms, myBookings] = await Promise.all([
+      get("admin.php", {action:"dorms"}).then(ds => ds.filter(d => d.owner_id == currentUser.id)),
+      get("bookings.php", {action:"list", owner_id: currentUser.id})
+    ]);
+    const pending  = myBookings.filter(b => b.status === "pending");
+    const approved = myBookings.filter(b => b.status === "approved");
+    const totalVal = myDorms.reduce((a, d) => a + parseFloat(d.price), 0);
+
+    p.innerHTML = `
+    <div class="section-header"><div><div class="section-title">Renter Dashboard</div><div class="page-subtitle">Manage your listings and bookings</div></div><button class="btn btn-primary" onclick="showPage('listing')">+ New Listing</button></div>
+    <div class="dash-grid">
+      <div class="dash-card"><div class="dash-num accent">${myDorms.length}</div><div class="dash-label">My Listings</div></div>
+      <div class="dash-card"><div class="dash-num blue">${myBookings.length}</div><div class="dash-label">Total Bookings</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:#BA7517">${pending.length}</div><div class="dash-label">Pending Requests</div></div>
+      <div class="dash-card"><div class="dash-num green">${approved.length}</div><div class="dash-label">Active Tenants</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:var(--accent2)">₱${totalVal.toLocaleString()}</div><div class="dash-label">Total Monthly Value</div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="tab-listings" onclick="switchDashTab('listings',this,${JSON.stringify(myDorms).replace(/"/g,'&quot;')},${JSON.stringify(myBookings).replace(/"/g,'&quot;')})">My Listings</button>
+      <button class="tab" id="tab-bookings" onclick="switchDashTab('bookings',this,${JSON.stringify(myDorms).replace(/"/g,'&quot;')},${JSON.stringify(myBookings).replace(/"/g,'&quot;')})">Booking Requests ${pending.length>0?`<span style="background:var(--accent);color:#fff;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:4px;">${pending.length}</span>`:""}</button>
+      <button class="tab" id="tab-tenants" onclick="switchDashTab('tenants',this,${JSON.stringify(myDorms).replace(/"/g,'&quot;')},${JSON.stringify(myBookings).replace(/"/g,'&quot;')})">Active Tenants</button>
+      <button class="tab" id="tab-former" onclick="switchDashTab('former',this,${JSON.stringify(myDorms).replace(/"/g,'&quot;')},${JSON.stringify(myBookings).replace(/"/g,'&quot;')})">Former Tenants</button>
+    </div>
+    <div id="dash-tab-content">${renderMyListings(myDorms)}</div>`;
+  } catch(e) { p.innerHTML += `<div class="alert alert-error">Error loading dashboard.</div>`; }
+}
+
+function renderMyListings(dorms) {
+  if (!dorms.length) return `<div class="empty"><div class="empty-icon">🏠</div><p>No listings yet.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Price</th><th>Slots</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>${dorms.map(d=>`<tr>
+    <td><strong>${d.name}</strong><br><small style="color:var(--text2)">${d.address}</small></td>
+    <td>₱${parseFloat(d.price).toLocaleString()}</td>
+    <td>${d.availability}/${d.total_slots}</td>
+    <td><span class="log-action ${d.status==="approved"?"log-booking":d.status==="pending"?"log-dorm":"log-delete"}">${d.status}</span></td>
+    <td><div class="action-btns">
+      <button class="btn btn-primary" style="font-size:12px;padding:5px 10px;" onclick="openDormDashboard(${d.id})">📊 Dashboard</button>
+      <button class="btn btn-secondary" style="font-size:12px;padding:5px 10px;" onclick="showEditDormModal(${d.id})">✏️ Edit</button>
+      <button class="btn btn-info" style="font-size:12px;padding:5px 10px;" onclick="showDormModal(${d.id})">View</button>
+      <button class="btn btn-danger" style="font-size:12px;padding:5px 10px;" onclick="deleteMyListing(${d.id})">Delete</button>
+    </div></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function renderDashBookings(bookings) {
+  const pending = bookings.filter(b => b.status === "pending" || b.status === "rejected");
+  if (!pending.length) return `<div class="empty"><div class="empty-icon">📋</div><p>No pending booking requests.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Student</th><th>Dorm</th><th>Message</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>${pending.map(b=>`<tr>
+    <td><strong>${b.student_name||"Student"}</strong></td>
+    <td>${b.dorm_name||"Unknown"}</td>
+    <td style="max-width:160px;font-size:12px;color:var(--text2)">${b.message||"—"}</td>
+    <td>${b.date||""}</td>
+    <td><span class="log-action ${b.status==="approved"?"log-booking":b.status==="pending"?"log-dorm":"log-delete"}">${b.status}</span></td>
+    <td>${b.status==="pending"?`<div class="action-btns">
+      <button class="btn btn-success" style="font-size:12px;padding:5px 10px;" onclick="updateBooking(${b.id},'approved')">✅ Approve</button>
+      <button class="btn btn-danger"  style="font-size:12px;padding:5px 10px;" onclick="updateBooking(${b.id},'rejected')">❌ Reject</button>
+    </div>`:`<span style="font-size:12px;color:var(--text2)">—</span>`}</td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function renderActiveTenants(bookings) {
+  const approved = bookings.filter(b => b.status === "approved");
+  if (!approved.length) return `<div class="empty"><div class="empty-icon">👥</div><p>No active tenants yet.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Tenant</th><th>Dorm</th><th>Move-in Date</th><th>Actions</th></tr></thead>
+  <tbody>${approved.map(b=>`<tr>
+    <td><strong>${b.student_name||"Tenant"}</strong><br><small style="color:var(--text2)">${b.student_email||""}</small></td>
+    <td>${b.dorm_name||"Unknown"}</td>
+    <td>${b.date||""}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-info" style="font-size:12px;padding:5px 10px;" onclick="openChat(${b.id})">💬 Chat</button>
+      <button class="btn btn-warning" style="font-size:12px;padding:5px 10px;" onclick="markVacated(${b.id})">🚪 Mark Vacated</button>
+    </div></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+async function markVacated(bookingId) {
+  if (!confirm("Mark this tenant as vacated? This will increase the dorm's availability by 1.")) return;
+  try {
+    const data = await post("bookings.php?action=update", {id: bookingId, status: "vacated", owner_id: currentUser.id});
+    if (!data.success) { showAlert(data.message || "Error", "error"); return; }
+    showAlert("Tenant marked as vacated. Slot is now available.");
+    renderDashboard();
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+function renderFormerTenants(bookings) {
+  const vacated = bookings.filter(b => b.status === "vacated");
+  if (!vacated.length) return `<div class="empty"><div class="empty-icon">🚪</div><p>No former tenants yet.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Tenant</th><th>Dorm</th><th>Move-in Date</th><th>Vacate Date</th><th>Actions</th></tr></thead>
+  <tbody>${vacated.map(b=>`<tr>
+    <td><strong>${b.student_name||"Tenant"}</strong><br><small style="color:var(--text2)">${b.student_email||""}</small></td>
+    <td>${b.dorm_name||"Unknown"}</td>
+    <td>${b.date||"—"}</td>
+    <td>${b.vacate_date||"—"}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-info" style="font-size:12px;padding:5px 10px;" onclick="openPastChat(${b.id})">💬 View Messages</button>
+    </div></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+async function openPastChat(bookingId) {
+  document.getElementById("modal-container").innerHTML = `
+  <div class="modal-overlay" onclick="if(event.target===this){closeModal();}">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div>
+        <h2>💬 Past Messages</h2>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">Booking #${bookingId} · Vacated</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-messages-box"><div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading...</div></div>
+        <div style="padding:.75rem 1rem;border-top:1px solid var(--border);background:var(--bg);font-size:12px;color:var(--text3);text-align:center;">
+          This booking has been vacated. Messaging is disabled.
+        </div>
+      </div>
+    </div>
+  </div></div>`;
+
+  try {
+    const msgs = await get("chat.php", {action:"messages", booking_id: bookingId, user_id: currentUser.id});
+    const box = document.getElementById("chat-messages-box");
+    if (!box) return;
+    if (!msgs || msgs.success === false || !msgs.length) {
+      box.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">No messages found for this booking.</div>`;
+      return;
+    }
+    box.innerHTML = msgs.map(m => {
+      const mine = m.sender_id == currentUser.id;
+      const t = m.created_at ? new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) : "";
+      return `<div class="chat-bubble ${mine?'mine':'theirs'}">
+        ${!mine ? `<div style="font-size:10px;font-weight:600;opacity:.7;margin-bottom:3px;">${m.sender_name}</div>` : ""}
+        ${m.message}
+        <div class="bubble-meta">${t}</div>
+      </div>`;
+    }).join("");
+    box.scrollTop = box.scrollHeight;
+  } catch(e) {
+    const box = document.getElementById("chat-messages-box");
+    if (box) box.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">Could not load messages.</div>`;
+  }
+}
+
+function switchDashTab(tab, btn, dorms, bookings) {
+  document.querySelectorAll("#page-dashboard .tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  const c = document.getElementById("dash-tab-content");
+  if (tab === "listings") c.innerHTML = renderMyListings(dorms);
+  else if (tab === "bookings") c.innerHTML = renderDashBookings(bookings);
+  else if (tab === "tenants") c.innerHTML = renderActiveTenants(bookings);
+  else if (tab === "former") c.innerHTML = renderFormerTenants(bookings);
+}
+
+// updateBooking is defined below (with dormId param for dorm dashboard refresh)
+
+async function deleteMyListing(id) {
+  if (!confirm("Delete this listing?")) return;
+  try {
+    await post("dorms.php?action=delete", {id, user_id: currentUser.id});
+    showAlert("Listing deleted.");
+    renderDashboard();
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// EDIT DORM MODAL (Owner & Admin)
+// ============================
+async function showEditDormModal(dormId) {
+  const isAdmin = currentUser && currentUser.role === "admin";
+  let dorm;
+  try {
+    dorm = await get("dorms.php", {action:"get", id: dormId});
+  } catch(e) { showAlert("Could not load dorm details.", "error"); return; }
+
+  const amenities  = Array.isArray(dorm.amenities) ? dorm.amenities : (dorm.amenities ? dorm.amenities.split(",") : []);
+  const images     = Array.isArray(dorm.images) ? dorm.images : [];
+  const amenityList = ["WiFi","AC","Fan","CCTV","Laundry","Kitchen","Study Room","Parking","Water Included","Meals Included","Private Bath","Security"];
+
+  document.getElementById("modal-container").innerHTML = `
+  <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>✏️ Edit: ${dorm.name}</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      ${!isAdmin ? `<div class="alert alert-info" style="margin-bottom:1rem;">As the dorm owner, you can update description, photos, amenities, and availability.</div>` : `<div class="alert alert-warning" style="margin-bottom:1rem;">Admin mode — you can edit all fields.</div>`}
+
+      ${isAdmin ? `
+      <div class="form-group"><label class="form-label">Dorm Name</label><input class="form-input" id="ed-name" value="${dorm.name}"/></div>
+      <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="ed-addr" value="${dorm.address||""}"/></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">University</label>
+          <select class="form-input" id="ed-univ">
+            ${["UST","PLM","DLSU","FEU","Mapua","PUP"].map(u=>`<option value="${u}" ${dorm.university===u?"selected":""}>${u}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Price (₱/mo)</label><input class="form-input" id="ed-price" type="number" value="${dorm.price}"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Total Slots</label><input class="form-input" id="ed-total" type="number" value="${dorm.total_slots}"/></div>
+        <div class="form-group"><label class="form-label">Available Slots</label><input class="form-input" id="ed-avail" type="number" value="${dorm.availability}"/></div>
+      </div>
+      ` : `
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Available Slots</label><input class="form-input" id="ed-avail" type="number" value="${dorm.availability}" min="0" max="${dorm.total_slots}"/><small style="color:var(--text2)">Max: ${dorm.total_slots} slots total</small></div>
+      </div>
+      `}
+
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="ed-desc" rows="3">${dorm.description||""}</textarea></div>
+
+      <div class="form-group"><label class="form-label">Amenities</label>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+          ${amenityList.map(a=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" class="ed-amenity-check" value="${a}" ${amenities.includes(a)?"checked":""} style="width:auto"/> ${a}
+          </label>`).join("")}
+        </div>
+      </div>
+
+      <!-- PHOTO MANAGEMENT -->
+      <div class="form-group">
+        <label class="form-label">Dorm Photos</label>
+        ${images.length > 0 ? `
+        <div style="margin-bottom:.75rem;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:.5rem;">Current photos — click ✕ to remove</div>
+          <div class="img-preview-grid" id="ed-existing-imgs">
+            ${images.map(img => `
+            <div class="img-preview-item" id="ed-img-${btoa(img).replace(/=/g,'')}">
+              <img src="${img}" onerror="this.src=''"/>
+              <button class="remove-img" onclick="deleteExistingImage('${img}', ${dormId})">✕</button>
+            </div>`).join("")}
+          </div>
+        </div>` : `<div style="font-size:12px;color:var(--text3);margin-bottom:.5rem;">No photos uploaded yet.</div>`}
+        <div class="img-upload-area" id="ed-upload-area"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleEditDrop(event, ${dormId})">
+          <input type="file" id="ed-images" accept="image/*" multiple onchange="handleEditImages(this.files, ${dormId})"/>
+          <div style="pointer-events:none;">
+            <div style="font-size:24px;margin-bottom:.25rem;">📷</div>
+            <div style="font-size:13px;font-weight:600;">Add more photos</div>
+            <div style="font-size:11px;color:var(--text3);">Click or drag · JPG, PNG, WEBP · Max 5MB each</div>
+          </div>
+        </div>
+        <div class="img-preview-grid" id="ed-new-preview"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="ed-save-btn" onclick="submitEditDorm(${dormId})">Save Changes</button>
+    </div>
+  </div></div>`;
+
+  // Store new files for edit modal
+  window._editFiles = [];
+}
+
+async function submitEditDorm(dormId) {
+  const isAdmin = currentUser && currentUser.role === "admin";
+  const desc    = document.getElementById("ed-desc").value.trim();
+  const avail   = parseInt(document.getElementById("ed-avail").value);
+  const amenities = [...document.querySelectorAll(".ed-amenity-check:checked")].map(x => x.value);
+
+  const payload = {
+    id: dormId, user_id: currentUser.id, user_role: currentUser.role,
+    description: desc, availability: avail, amenities: amenities
+  };
+
+  if (isAdmin) {
+    payload.name       = document.getElementById("ed-name").value.trim();
+    payload.address    = document.getElementById("ed-addr").value.trim();
+    payload.university = document.getElementById("ed-univ").value;
+    payload.price      = parseFloat(document.getElementById("ed-price").value);
+    payload.total_slots = parseInt(document.getElementById("ed-total").value);
+  }
+
+  const btn = document.getElementById("ed-save-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+
+  try {
+    const data = await post("dorms.php?action=edit", payload);
+    if (!data.success) { showAlert(data.message || "Error saving changes", "error"); if (btn) { btn.disabled=false; btn.textContent="Save Changes"; } return; }
+
+    // Upload any new photos added in edit modal
+    const editFiles = window._editFiles || [];
+    if (editFiles.length > 0) {
+      if (btn) btn.textContent = `Uploading ${editFiles.length} photo(s)...`;
+      const formData = new FormData();
+      formData.append("dorm_id", dormId);
+      formData.append("user_id", currentUser.id);
+      editFiles.forEach((f, i) => formData.append(`image_${i}`, f));
+      await fetch(`api/dorms.php?action=upload_images`, { method:"POST", body: formData });
+    }
+
+    window._editFiles = [];
+    showAlert("Dorm updated successfully!");
+    closeModal();
+    if (isAdmin) loadAdminTab("dorms");
+    else renderDashboard();
+  } catch(e) {
+    showAlert("Connection error.", "error");
+    if (btn) { btn.disabled=false; btn.textContent="Save Changes"; }
+  }
+}
+
+function handleEditDrop(e, dormId) {
+  e.preventDefault();
+  document.getElementById("ed-upload-area").classList.remove("drag-over");
+  handleEditImages(e.dataTransfer.files, dormId);
+}
+
+function handleEditImages(files, dormId) {
+  if (!window._editFiles) window._editFiles = [];
+  const maxSize = 5 * 1024 * 1024;
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith("image/")) { showAlert(`${file.name} is not an image`, "error"); return; }
+    if (file.size > maxSize) { showAlert(`${file.name} exceeds 5MB`, "error"); return; }
+    window._editFiles.push(file);
+  });
+  renderEditPreviews();
+}
+
+function renderEditPreviews() {
+  const grid = document.getElementById("ed-new-preview");
+  if (!grid) return;
+  const files = window._editFiles || [];
+  if (!files.length) { grid.innerHTML = ""; return; }
+  grid.innerHTML = files.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    return `<div class="img-preview-item">
+      <img src="${url}" alt="New photo"/>
+      <button class="remove-img" onclick="removeEditFile(${i})">✕</button>
+    </div>`;
+  }).join("");
+}
+
+function removeEditFile(index) {
+  if (window._editFiles) { window._editFiles.splice(index, 1); renderEditPreviews(); }
+}
+
+async function deleteExistingImage(imgPath, dormId) {
+  if (!confirm("Remove this photo?")) return;
+  try {
+    const data = await post("dorms.php?action=delete_image", {
+      dorm_id: dormId, user_id: currentUser.id,
+      user_role: currentUser.role, image: imgPath
+    });
+    if (!data.success) { showAlert("Could not remove photo", "error"); return; }
+    // Remove from DOM
+    const key = btoa(imgPath).replace(/=/g,"");
+    const el  = document.getElementById("ed-img-" + key);
+    if (el) el.remove();
+    showAlert("Photo removed.");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// ADD LISTING
+// ============================
+let listingFiles = []; // staged image files before submit
+
+let listingPickerMap = null;
+let listingPickerMarker = null;
+let listingLatLng = { lat: null, lng: null };
+
+function renderListingForm() {
+  if (!currentUser || currentUser.role === "rentee") { showPage("home"); return; }
+  listingFiles = [];
+  listingLatLng = { lat: null, lng: null };
+
+  document.getElementById("page-listing").innerHTML = `
+  <div style="max-width:700px;margin:0 auto;">
+  <div class="section-header"><div><div class="section-title">Add New Listing</div></div><button class="btn btn-secondary" onclick="showPage('dashboard')">← Back</button></div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;">
+
+    <div class="form-section"><div class="form-section-title">Basic Info</div>
+      <div class="form-group"><label class="form-label">Dorm Name</label><input class="form-input" id="nl-name" placeholder="e.g. Sampaguita Dormitory"/></div>
+      <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="nl-addr" placeholder="Full address in Manila"/></div>
+      <div class="form-group"><label class="form-label">Nearest University</label>
+        <select class="form-input" id="nl-univ"><option>UST</option><option>PLM</option><option>DLSU</option><option>FEU</option><option>Mapua</option><option>PUP</option></select></div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="nl-desc" placeholder="Describe your dorm..."></textarea></div>
+    </div>
+
+    <div class="form-section"><div class="form-section-title">Pricing & Availability</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Monthly Price (₱)</label><input class="form-input" id="nl-price" type="number" placeholder="e.g. 3500"/></div>
+        <div class="form-group"><label class="form-label">Total Slots</label><input class="form-input" id="nl-slots" type="number" placeholder="e.g. 10"/></div>
+      </div>
+    </div>
+
+    <div class="form-section"><div class="form-section-title">Amenities</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+        ${["WiFi","AC","Fan","CCTV","Laundry","Kitchen","Study Room","Parking","Water Included","Meals Included","Private Bath","Security"].map(a=>
+        `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="amenity-check" value="${a}" style="width:auto"/> ${a}</label>`).join("")}
+      </div>
+    </div>
+
+    <!-- MAP LOCATION PICKER -->
+    <div class="form-section">
+      <div class="form-section-title">📍 Pin Your Dorm Location <span style="font-weight:400;color:var(--accent);text-transform:none;font-size:12px;">* Required</span></div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:.75rem;">Click anywhere on the map to drop a pin at your dorm's exact location. You can also search by university shortcut buttons below.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem;">
+        ${[["UST",14.6103,120.9890],["PLM",14.5800,120.9840],["DLSU",14.5640,120.9935],["FEU",14.6001,120.9869],["Mapua",14.5950,120.9827],["PUP",14.5990,120.9937]].map(([u,la,ln])=>
+          `<button type="button" class="btn btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="flyListingMap(${la},${ln},'${u}')">🎓 ${u}</button>`
+        ).join("")}
+      </div>
+      <div id="nl-map-picker" style="height:320px;border-radius:var(--radius-sm);border:2px solid var(--border);overflow:hidden;"></div>
+      <div id="nl-latlng-display" style="margin-top:.5rem;padding:.6rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text2);display:flex;align-items:center;gap:.5rem;">
+        <span style="font-size:16px;">📌</span>
+        <span id="nl-latlng-text">No location pinned yet — click the map to set your dorm's location.</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Dorm Photos <span style="font-weight:400;color:var(--text3);text-transform:none;">(up to 8 images, max 5MB each)</span></div>
+      <div class="img-upload-area" id="nl-upload-area"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="handleListingDrop(event)">
+        <input type="file" id="nl-images" accept="image/*" multiple onchange="handleListingImages(this.files)"/>
+        <div style="pointer-events:none;">
+          <div style="font-size:32px;margin-bottom:.5rem;">📷</div>
+          <div style="font-weight:600;font-size:14px;margin-bottom:.25rem;">Click or drag photos here</div>
+          <div style="font-size:12px;color:var(--text3);">JPG, PNG, WEBP supported · Up to 8 photos</div>
+        </div>
+      </div>
+      <div class="img-preview-grid" id="nl-preview-grid"></div>
+    </div>
+
+    <button class="btn btn-primary btn-full" id="nl-submit-btn" onclick="submitListing()">
+      Submit Listing for Approval
+    </button>
+  </div></div>`;
+
+  // Init map picker after DOM is ready
+  setTimeout(() => {
+    if (listingPickerMap) { listingPickerMap.remove(); listingPickerMap = null; }
+    listingPickerMarker = null;
+
+    const m = L.map("nl-map-picker").setView([14.5950, 120.9850], 14);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {attribution:"© OpenStreetMap"}).addTo(m);
+    listingPickerMap = m;
+
+    // University labels on picker map
+    const univs = [{name:"UST",lat:14.6103,lng:120.9890},{name:"PLM",lat:14.5800,lng:120.9840},{name:"DLSU",lat:14.5640,lng:120.9935},{name:"FEU",lat:14.6001,lng:120.9869},{name:"Mapua",lat:14.5950,lng:120.9827}];
+    univs.forEach(u => {
+      const icon = L.divIcon({html:`<div style="background:#185FA5;color:#fff;padding:3px 7px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3)">${u.name}</div>`,className:"",iconAnchor:[20,10]});
+      L.marker([u.lat, u.lng], {icon}).addTo(m);
+    });
+
+    // Click to place pin
+    m.on("click", function(e) {
+      const { lat, lng } = e.latlng;
+      listingLatLng = { lat: lat.toFixed(6), lng: lng.toFixed(6) };
+
+      if (listingPickerMarker) {
+        listingPickerMarker.setLatLng(e.latlng);
+      } else {
+        const pinIcon = L.divIcon({
+          html:`<div style="background:var(--accent,#D85A30);color:#fff;padding:6px 10px;border-radius:8px;font-size:13px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.3);white-space:nowrap;">📍 Your Dorm</div>`,
+          className:"", iconAnchor:[48,30]
+        });
+        listingPickerMarker = L.marker(e.latlng, {icon: pinIcon, draggable: true}).addTo(m);
+        listingPickerMarker.on("dragend", function(ev) {
+          const p = ev.target.getLatLng();
+          listingLatLng = { lat: p.lat.toFixed(6), lng: p.lng.toFixed(6) };
+          updateLatLngDisplay();
+        });
+      }
+      updateLatLngDisplay();
+    });
+  }, 150);
+}
+
+function updateLatLngDisplay() {
+  const el = document.getElementById("nl-latlng-text");
+  if (!el) return;
+  if (listingLatLng.lat) {
+    el.innerHTML = `<strong style="color:var(--text);">Location set!</strong> Lat: ${listingLatLng.lat}, Lng: ${listingLatLng.lng} &nbsp;<span style="color:var(--green);font-weight:600;">✓ Pin placed</span>`;
+  }
+}
+
+function flyListingMap(lat, lng, name) {
+  if (!listingPickerMap) return;
+  listingPickerMap.flyTo([lat, lng], 16, {duration: 0.8});
+}
+
+function handleListingDrop(e) {
+  e.preventDefault();
+  document.getElementById("nl-upload-area").classList.remove("drag-over");
+  handleListingImages(e.dataTransfer.files);
+}
+
+function handleListingImages(files) {
+  const maxFiles = 8;
+  const maxSize  = 5 * 1024 * 1024;
+  Array.from(files).forEach(file => {
+    if (listingFiles.length >= maxFiles) { showAlert(`Max ${maxFiles} photos allowed`, "error"); return; }
+    if (!file.type.startsWith("image/")) { showAlert(`${file.name} is not an image`, "error"); return; }
+    if (file.size > maxSize) { showAlert(`${file.name} exceeds 5MB`, "error"); return; }
+    listingFiles.push(file);
+  });
+  renderListingPreviews();
+}
+
+function renderListingPreviews() {
+  const grid = document.getElementById("nl-preview-grid");
+  if (!grid) return;
+  if (!listingFiles.length) { grid.innerHTML = ""; return; }
+  grid.innerHTML = listingFiles.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    return `<div class="img-preview-item" id="nl-prev-${i}">
+      <img src="${url}" alt="Preview"/>
+      <button class="remove-img" onclick="removeListingImage(${i})">✕</button>
+    </div>`;
+  }).join("");
+}
+
+function removeListingImage(index) {
+  listingFiles.splice(index, 1);
+  renderListingPreviews();
+}
+
+async function submitListing() {
+  const name  = document.getElementById("nl-name").value.trim();
+  const addr  = document.getElementById("nl-addr").value.trim();
+  const univ  = document.getElementById("nl-univ").value;
+  const desc  = document.getElementById("nl-desc").value.trim();
+  const price = parseFloat(document.getElementById("nl-price").value);
+  const slots = parseInt(document.getElementById("nl-slots").value);
+  if (!name || !addr || !desc || !price || !slots) { showAlert("Please fill all required fields", "error"); return; }
+
+  if (!listingLatLng.lat || !listingLatLng.lng) {
+    showAlert("Please pin your dorm location on the map before submitting.", "error");
+    document.getElementById("nl-map-picker")?.scrollIntoView({behavior:"smooth", block:"center"});
+    return;
+  }
+
+  const amenities = [...document.querySelectorAll(".amenity-check:checked")].map(x => x.value);
+  const btn = document.getElementById("nl-submit-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Submitting..."; }
+
+  try {
+    // Step 1: Create the dorm record
+    const data = await post("dorms.php?action=add", {
+      owner_id: currentUser.id, name, description: desc, address: addr,
+      university: univ, price,
+      lat: parseFloat(listingLatLng.lat),
+      lng: parseFloat(listingLatLng.lng),
+      availability: slots, total_slots: slots,
+      amenities: amenities.length ? amenities : ["WiFi"]
+    });
+    if (!data.success) { showAlert(data.message || "Error creating listing", "error"); if (btn) { btn.disabled=false; btn.textContent="Submit Listing for Approval"; } return; }
+
+    const dormId = data.id;
+
+    // Step 2: Upload images if any were selected
+    if (listingFiles.length > 0) {
+      if (btn) btn.textContent = `Uploading ${listingFiles.length} photo(s)...`;
+      const formData = new FormData();
+      formData.append("dorm_id", dormId);
+      formData.append("user_id", currentUser.id);
+      listingFiles.forEach((f, i) => formData.append(`image_${i}`, f));
+
+      const upRes = await fetch(`api/dorms.php?action=upload_images`, { method:"POST", body: formData });
+      const upData = await upRes.json();
+      if (!upData.success) {
+        showAlert("Listing created but some photos failed to upload: " + (upData.errors||[]).join(", "), "error");
+      } else {
+        showAlert(`Listing submitted with ${upData.uploaded.length} photo(s)! Pending admin approval.`);
+      }
+    } else {
+      showAlert("Listing submitted! Pending admin approval.");
+    }
+
+    listingFiles = [];
+    showPage("dashboard");
+  } catch(e) {
+    showAlert("Connection error.", "error");
+    if (btn) { btn.disabled=false; btn.textContent="Submit Listing for Approval"; }
+  }
+}
+
+// ============================
+// RENTEE DASHBOARD
+// ============================
+async function renderRenteeDashboard() {
+  if (!currentUser || currentUser.role !== "rentee") { showPage("home"); return; }
+  const p = document.getElementById("page-rentee-dash");
+  p.innerHTML = `
+  <div class="section-header">
+    <div><div class="section-title">My Bookings</div><div class="page-subtitle">Track and manage your dorm applications</div></div>
+    <button class="btn btn-primary" onclick="showPage('home')">🔍 Browse Dorms</button>
+  </div>
+  <div id="rentee-dash-content"><div style="text-align:center;padding:3rem;color:var(--text2)">⏳ Loading...</div></div>`;
+
+  try {
+    const bookings = await get("bookings.php", {action: "list", user_id: currentUser.id});
+
+    const pending  = bookings.filter(b => b.status === "pending");
+    const approved = bookings.filter(b => b.status === "approved");
+    const rejected = bookings.filter(b => b.status === "rejected");
+    const vacated  = bookings.filter(b => b.status === "vacated");
+    const cancelled = bookings.filter(b => b.status === "cancelled");
+
+    const content = document.getElementById("rentee-dash-content");
+    if (!bookings.length) {
+      content.innerHTML = `<div class="empty"><div class="empty-icon">🏠</div><p>You haven't applied to any dorm yet.<br><a href="#" onclick="showPage('home')" style="color:var(--accent);font-weight:600;">Browse available dorms →</a></p></div>`;
+      return;
+    }
+
+    // Stats row
+    const statsHTML = `
+    <div class="dash-grid" style="margin-bottom:1.5rem;">
+      <div class="dash-card"><div class="dash-num" style="color:#BA7517">${pending.length}</div><div class="dash-label">Pending</div></div>
+      <div class="dash-card"><div class="dash-num green">${approved.length}</div><div class="dash-label">Approved</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:#A32D2D">${rejected.length}</div><div class="dash-label">Rejected</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:var(--text3)">${vacated.length + cancelled.length}</div><div class="dash-label">Closed</div></div>
+    </div>`;
+
+    // Tabs
+    const tabsHTML = `
+    <div class="tabs">
+      <button class="tab active" id="rt-tab-all" onclick="switchRenteeTab('all',this)">All (${bookings.length})</button>
+      <button class="tab" id="rt-tab-pending" onclick="switchRenteeTab('pending',this)">Pending ${pending.length>0?`<span style="background:var(--accent);color:#fff;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:4px;">${pending.length}</span>`:""}</button>
+      <button class="tab" id="rt-tab-approved" onclick="switchRenteeTab('approved',this)">Approved</button>
+      <button class="tab" id="rt-tab-closed" onclick="switchRenteeTab('closed',this)">Closed</button>
+    </div>
+    <div id="rentee-tab-content">${renderRenteeBookingTable(bookings)}</div>`;
+
+    content.innerHTML = statsHTML + tabsHTML;
+    window._renteeBookings = bookings;
+
+  } catch(e) {
+    document.getElementById("rentee-dash-content").innerHTML = `<div class="alert alert-error">Error loading your bookings. Check server connection.</div>`;
+  }
+}
+
+function renderRenteeBookingTable(bookings) {
+  if (!bookings.length) return `<div class="empty"><div class="empty-icon">📋</div><p>No bookings in this category.</p></div>`;
+
+  const statusColors = {
+    pending:   "log-dorm",
+    approved:  "log-booking",
+    rejected:  "log-delete",
+    vacated:   "log-delete",
+    cancelled: "log-admin"
+  };
+
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Dorm</th><th>Address</th><th>Price</th><th>Applied</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>${bookings.map(b => `<tr>
+    <td>
+      <strong>${b.dorm_name || "Unknown Dorm"}</strong>
+      <br><small style="color:var(--text2)">${b.university || ""}</small>
+    </td>
+    <td style="font-size:12px;color:var(--text2)">${b.dorm_address || "—"}</td>
+    <td style="font-weight:600;color:var(--accent)">₱${b.dorm_price ? parseFloat(b.dorm_price).toLocaleString() : "—"}</td>
+    <td style="font-size:12px;color:var(--text2)">${b.date || "—"}</td>
+    <td><span class="log-action ${statusColors[b.status] || "log-dorm"}">${b.status}</span></td>
+    <td><div class="action-btns">
+      <button class="btn btn-secondary" style="font-size:12px;padding:5px 10px;" onclick="showDormModal(${b.dorm_id})">👁 View</button>
+      ${b.status === "approved" ? `
+        <button class="btn btn-info" style="font-size:12px;padding:5px 10px;" onclick="openChat(${b.id})">💬 Chat</button>
+        <button class="btn btn-warning" style="font-size:12px;padding:5px 10px;" onclick="doVacate(${b.id})">🚪 Vacate</button>
+      ` : ""}
+      ${b.status === "pending" ? `
+        <button class="btn btn-danger" style="font-size:12px;padding:5px 10px;" onclick="doCancelBooking(${b.id})">✕ Cancel</button>
+      ` : ""}
+    </div></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function switchRenteeTab(tab, btn) {
+  document.querySelectorAll("#page-rentee-dash .tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  const all = window._renteeBookings || [];
+  let filtered;
+  if (tab === "all")      filtered = all;
+  else if (tab === "pending")  filtered = all.filter(b => b.status === "pending");
+  else if (tab === "approved") filtered = all.filter(b => b.status === "approved");
+  else if (tab === "closed")   filtered = all.filter(b => ["rejected","vacated","cancelled"].includes(b.status));
+  document.getElementById("rentee-tab-content").innerHTML = renderRenteeBookingTable(filtered);
+}
+
+// ============================
+// ADMIN
+// ============================
+let adminTab = "overview";
+
+async function renderAdmin() {
+  if (!currentUser || currentUser.role !== "admin") { showPage("home"); return; }
+  const p = document.getElementById("page-admin");
+  p.innerHTML = `<div class="section-header"><div><div class="section-title">Admin Dashboard</div><div class="page-subtitle">Manage users, listings, and system logs</div></div></div>
+  <div id="admin-stats"><div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading stats...</div></div>
+  <div class="tabs">
+    <button class="tab ${adminTab==="overview"?"active":""}" onclick="switchAdminTab('overview',this)">Users</button>
+    <button class="tab ${adminTab==="dorms"?"active":""}" onclick="switchAdminTab('dorms',this)">Listings</button>
+    <button class="tab ${adminTab==="notices"?"active":""}" onclick="switchAdminTab('notices',this)">⚠️ Inactive Notices</button>
+    <button class="tab ${adminTab==="contact"?"active":""}" onclick="switchAdminTab('contact',this)">📧 Contact Renters</button>
+    <button class="tab ${adminTab==="logs"?"active":""}" onclick="switchAdminTab('logs',this)">Activity Logs</button>
+    <button class="tab ${adminTab==="bookings"?"active":""}" onclick="switchAdminTab('bookings',this)">Bookings</button>
+  </div>
+  <div id="admin-content"><div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading...</div></div>`;
+
+  try {
+    const stats = await get("admin.php", {action:"stats"});
+    document.getElementById("admin-stats").innerHTML = `
+    <div class="dash-grid">
+      <div class="dash-card"><div class="dash-num accent">${stats.users}</div><div class="dash-label">Total Users</div></div>
+      <div class="dash-card"><div class="dash-num blue">${stats.dorms}</div><div class="dash-label">Total Listings</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:#BA7517">${stats.pending}</div><div class="dash-label">Pending Approval</div></div>
+      <div class="dash-card"><div class="dash-num green">${stats.bookings}</div><div class="dash-label">Bookings</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:#534AB7">${stats.logs}</div><div class="dash-label">Activity Logs</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:#A32D2D">${stats.banned}</div><div class="dash-label">Banned Users</div></div>
+      <div class="dash-card" style="cursor:pointer;" onclick="showPage('admin-bin')"><div class="dash-num" style="color:#7B5C00">${stats.bin_count||0}</div><div class="dash-label">🗑 In Bin</div></div>
+      <div class="dash-card" style="cursor:pointer;" onclick="switchAdminTab('notices',document.querySelector('#page-admin .tabs .tab:nth-child(3)'))"><div class="dash-num" style="color:#993C1D">${stats.notices||0}</div><div class="dash-label">⚠️ Inactive Notices</div></div>
+    </div>`;
+  } catch(e) {}
+
+  loadAdminTab(adminTab);
+}
+
+function switchAdminTab(tab, btn) {
+  adminTab = tab;
+  document.querySelectorAll("#page-admin .tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  loadAdminTab(tab);
+}
+
+// ============================
+// ADMIN SEARCH/FILTER HELPERS
+// ============================
+let _adminUsersCache = [];
+let _adminDormsCache = [];
+let _adminBookingsCache = [];
+let _adminRentersCache = [];
+
+function renderUsersTable(users) {
+  if (!users.length) return `<div class="empty"><div class="empty-icon">👤</div><p>No users match your search.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+  <tbody>${users.map(u=>`<tr>
+    <td style="color:var(--text3)">#${u.id}</td>
+    <td><strong>${u.name}</strong></td>
+    <td style="color:var(--text2)">${u.email}</td>
+    <td><select style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;background:var(--bg);" onchange="adminChangeRole(${u.id},this.value)">
+      <option value="rentee" ${u.role==="rentee"?"selected":""}>Rentee</option>
+      <option value="renter" ${u.role==="renter"?"selected":""}>Renter</option>
+      <option value="admin"  ${u.role==="admin" ?"selected":""}>Admin</option>
+    </select></td>
+    <td><span class="log-action ${u.status==="active"?"log-booking":"log-delete"}">${u.status}</span></td>
+    <td style="color:var(--text2)">${u.created_at||""}</td>
+    <td>${u.id != currentUser.id?`<div class="action-btns">
+      <button class="btn ${u.status==="active"?"btn-danger":"btn-success"}" style="font-size:12px;padding:5px 10px;" onclick="adminToggleBan(${u.id})">${u.status==="active"?"Ban":"Unban"}</button>
+      <button class="btn btn-danger" style="font-size:12px;padding:5px 10px;" onclick="adminDeleteUser(${u.id})">Delete</button>
+    </div>`:`<span style="font-size:12px;color:var(--text2)">You</span>`}</td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function filterAdminUsers() {
+  const q = (document.getElementById("admin-user-search")?.value || "").toLowerCase();
+  const role = document.getElementById("admin-user-role")?.value || "";
+  const status = document.getElementById("admin-user-status")?.value || "";
+  let filtered = _adminUsersCache;
+  if (q) filtered = filtered.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || String(u.id).includes(q));
+  if (role) filtered = filtered.filter(u => u.role === role);
+  if (status) filtered = filtered.filter(u => u.status === status);
+  const countEl = document.getElementById("admin-user-count");
+  if (countEl) countEl.textContent = `${filtered.length} user${filtered.length!==1?"s":""}`;
+  const tableEl = document.getElementById("admin-users-table");
+  if (tableEl) tableEl.innerHTML = renderUsersTable(filtered);
+}
+
+function renderDormsTable(dorms) {
+  if (!dorms.length) return `<div class="empty"><div class="empty-icon">🏠</div><p>No listings match your search.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Owner</th><th>University</th><th>Price</th><th>Slots</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>${dorms.map(d=>`<tr>
+    <td><strong>${d.name}</strong><br><small style="color:var(--text2)">${d.address}</small></td>
+    <td>${d.owner_name||"Unknown"}</td>
+    <td>${d.university}</td>
+    <td>₱${parseFloat(d.price).toLocaleString()}</td>
+    <td>${d.availability}/${d.total_slots}</td>
+    <td><span class="log-action ${d.status==="approved"?"log-booking":d.status==="pending"?"log-dorm":"log-delete"}">${d.status}</span></td>
+    <td><div class="action-btns">
+      ${d.status==="pending"?`
+        <button class="btn btn-success" style="font-size:12px;padding:5px 10px;" onclick="adminApproveDorm(${d.id})">✅ Approve</button>
+        <button class="btn btn-danger" style="font-size:12px;padding:5px 10px;" onclick="adminRejectDorm(${d.id})">❌ Reject</button>
+      `:""}
+      ${d.status!=="pending"?`<button class="btn btn-warning" style="font-size:12px;padding:5px 10px;" onclick="adminSendNotice(${d.id},'${d.name.replace(/'/g,"\\'")}')">⚠️ Notice</button>`:""}
+      <button class="btn btn-danger" style="font-size:12px;padding:5px 10px;" onclick="adminDeleteDorm(${d.id})">Delete</button>
+    </div></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function filterAdminDorms() {
+  const q = (document.getElementById("admin-dorm-search")?.value || "").toLowerCase();
+  const univ = document.getElementById("admin-dorm-univ")?.value || "";
+  const status = document.getElementById("admin-dorm-status")?.value || "";
+  let filtered = _adminDormsCache;
+  if (q) filtered = filtered.filter(d => d.name.toLowerCase().includes(q) || (d.owner_name||"").toLowerCase().includes(q) || (d.address||"").toLowerCase().includes(q));
+  if (univ) filtered = filtered.filter(d => d.university === univ);
+  if (status) filtered = filtered.filter(d => d.status === status);
+  const countEl = document.getElementById("admin-dorm-count");
+  if (countEl) countEl.textContent = `${filtered.length} listing${filtered.length!==1?"s":""}`;
+  const tableEl = document.getElementById("admin-dorms-table");
+  if (tableEl) tableEl.innerHTML = renderDormsTable(filtered);
+}
+
+function renderBookingsTable(bookings) {
+  if (!bookings.length) return `<div class="empty"><div class="empty-icon">📋</div><p>No bookings match your search.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>Student</th><th>Dorm</th><th>Date</th><th>Status</th></tr></thead>
+  <tbody>${bookings.map(b=>`<tr>
+    <td style="color:var(--text3)">#${b.id}</td>
+    <td><strong>${b.student_name||"Student"}</strong></td>
+    <td>${b.dorm_name||"Unknown"}</td>
+    <td>${b.date||""}</td>
+    <td><span class="log-action ${b.status==="approved"?"log-booking":b.status==="pending"?"log-dorm":b.status==="vacated"?"log-delete":"log-delete"}">${b.status}</span></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function filterAdminBookings() {
+  const q = (document.getElementById("admin-booking-search")?.value || "").toLowerCase();
+  const status = document.getElementById("admin-booking-status")?.value || "";
+  let filtered = _adminBookingsCache;
+  if (q) filtered = filtered.filter(b => (b.student_name||"").toLowerCase().includes(q) || (b.dorm_name||"").toLowerCase().includes(q) || String(b.id).includes(q));
+  if (status) filtered = filtered.filter(b => b.status === status);
+  const countEl = document.getElementById("admin-booking-count");
+  if (countEl) countEl.textContent = `${filtered.length} booking${filtered.length!==1?"s":""}`;
+  const tableEl = document.getElementById("admin-bookings-table");
+  if (tableEl) tableEl.innerHTML = renderBookingsTable(filtered);
+}
+
+function filterAdminRenters() {
+  const q = (document.getElementById("admin-renter-search")?.value || "").toLowerCase();
+  const list = document.getElementById("admin-contact-list");
+  if (!list) return;
+  const items = list.querySelectorAll(".chat-item");
+  let shown = 0;
+  items.forEach(item => {
+    const name = item.querySelector(".chat-name")?.textContent.toLowerCase() || "";
+    const email = item.querySelector(".chat-preview")?.textContent.toLowerCase() || "";
+    const match = !q || name.includes(q) || email.includes(q);
+    item.style.display = match ? "" : "none";
+    if (match) shown++;
+  });
+  const countEl = document.getElementById("admin-renter-count");
+  if (countEl) countEl.textContent = `${shown} renter${shown!==1?"s":""}`;
+}
+
+async function loadAdminTab(tab) {
+  const content = document.getElementById("admin-content");
+  content.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading...</div>`;
+  try {
+    if (tab === "overview") {
+      const users = await get("admin.php", {action:"users"});
+      _adminUsersCache = users;
+      content.innerHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
+        <input class="form-input" id="admin-user-search" placeholder="🔍 Search by name, email, or ID..." style="max-width:260px;padding:8px 12px;font-size:13px;" oninput="filterAdminUsers()"/>
+        <select class="filter-select" id="admin-user-role" onchange="filterAdminUsers()">
+          <option value="">All Roles</option>
+          <option value="rentee">Rentee</option>
+          <option value="renter">Renter</option>
+          <option value="admin">Admin</option>
+        </select>
+        <select class="filter-select" id="admin-user-status" onchange="filterAdminUsers()">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="banned">Banned</option>
+        </select>
+        <span class="results-count" id="admin-user-count">${users.length} users</span>
+      </div>
+      <div id="admin-users-table">${renderUsersTable(users)}</div>`;
+    } else if (tab === "dorms") {
+      const dorms = await get("admin.php", {action:"dorms"});
+      _adminDormsCache = dorms;
+      const univs = [...new Set(dorms.map(d=>d.university).filter(Boolean))].sort();
+      content.innerHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
+        <input class="form-input" id="admin-dorm-search" placeholder="🔍 Search by name, owner, or address..." style="max-width:280px;padding:8px 12px;font-size:13px;" oninput="filterAdminDorms()"/>
+        <select class="filter-select" id="admin-dorm-univ" onchange="filterAdminDorms()">
+          <option value="">All Universities</option>
+          ${univs.map(u=>`<option value="${u}">${u}</option>`).join("")}
+        </select>
+        <select class="filter-select" id="admin-dorm-status" onchange="filterAdminDorms()">
+          <option value="">All Status</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <span class="results-count" id="admin-dorm-count">${dorms.length} listings</span>
+      </div>
+      <div id="admin-dorms-table">${renderDormsTable(dorms)}</div>`;
+    } else if (tab === "notices") {
+      // Inactive notices tab
+      const notices = await get("bin.php", {action:"notices"});
+      const pending = await get("admin.php", {action:"dorms"}).then(ds => ds.filter(d => d.status === "approved" && parseInt(d.availability) === 0));
+      content.innerHTML = `
+      <div style="margin-bottom:1.5rem;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:.5rem;">⚠️ Active Inactive Notices</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">Dorms that have been flagged as inactive. If not updated within 30 days, they will be automatically moved to the Recently Deleted bin.</p>
+        ${notices.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>Dorm</th><th>Owner</th><th>Notice Date</th><th>Expires</th><th>Actions</th></tr></thead>
+        <tbody>${notices.map(n=>`<tr>
+          <td><strong>${n.dorm_name}</strong></td>
+          <td>${n.owner_name}<br><small style="color:var(--text3)">${n.owner_email}</small></td>
+          <td>${n.notice_date}</td>
+          <td style="color:#A32D2D;font-weight:600;">${n.expires_at}</td>
+          <td><div class="action-btns">
+            <button class="btn btn-success" style="font-size:12px;padding:5px 10px;" onclick="adminResolveNotice(${n.id})">✅ Resolve</button>
+          </div></td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="alert alert-success">No active inactive notices. All dorms are in good standing.</div>`}
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0;">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+          <div style="font-size:15px;font-weight:700;">Full Approved Dorms (0 availability)</div>
+          <button class="btn btn-warning" style="font-size:12px;" onclick="adminProcessExpired()">🔄 Process Expired Notices</button>
+        </div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">These approved dorms currently have zero available slots. You can send an inactive notice if a dorm has been full for a prolonged period.</p>
+        ${pending.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Owner</th><th>University</th><th>Slots</th><th>Actions</th></tr></thead>
+        <tbody>${pending.map(d=>`<tr>
+          <td><strong>${d.name}</strong><br><small style="color:var(--text2)">${d.address}</small></td>
+          <td>${d.owner_name||"Unknown"}</td>
+          <td>${d.university}</td>
+          <td style="color:#A32D2D;font-weight:600;">${d.availability}/${d.total_slots}</td>
+          <td><button class="btn btn-warning" style="font-size:12px;padding:5px 10px;" onclick="adminSendNotice(${d.id},'${d.name.replace(/'/g,"\\'")}')">⚠️ Send Notice</button></td>
+        </tr>`).join("")}</tbody></table></div>`
+        : `<div class="alert alert-info">No full approved dorms found.</div>`}
+      </div>`;
+
+    } else if (tab === "contact") {
+      // Contact renters tab
+      const renters = await get("admin_messages.php", {action:"renters"});
+      _adminRentersCache = renters;
+      content.innerHTML = `
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:1.5rem;min-height:400px;">
+        <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;display:flex;flex-direction:column;">
+          <div style="padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--bg);">
+            <div style="font-size:13px;font-weight:700;margin-bottom:.5rem;">Renters <span id="admin-renter-count" style="color:var(--text2);font-weight:400;">(${renters.length})</span></div>
+            <input class="form-input" id="admin-renter-search" placeholder="🔍 Search by name or email..." style="padding:7px 10px;font-size:12px;width:100%;" oninput="filterAdminRenters()"/>
+          </div>
+          <div id="admin-contact-list" style="overflow-y:auto;flex:1;max-height:480px;">
+            ${renters.length ? renters.map(r=>`
+            <div onclick="adminOpenConversation(${r.id},'${r.name.replace(/'/g,"\\'")}',this)" class="chat-item" data-renter="${r.id}">
+              <div class="chat-avatar" style="background:var(--accent2);">${initials(r.name)}</div>
+              <div class="chat-info">
+                <div class="chat-name">${r.name}</div>
+                <div class="chat-preview">${r.email}</div>
+              </div>
+            </div>`).join("")
+            : `<div style="padding:1.5rem;text-align:center;color:var(--text2);font-size:13px;">No active renters found.</div>`}
+          </div>
+        </div>
+        <div id="admin-conversation-panel" style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;display:flex;flex-direction:column;">
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:3rem;text-align:center;color:var(--text2);">
+            <div>
+              <div style="font-size:48px;margin-bottom:1rem;">📧</div>
+              <div style="font-size:15px;font-weight:600;margin-bottom:.5rem;">Select a Renter</div>
+              <div style="font-size:13px;">Choose a renter from the list to start or view a conversation.</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    } else if (tab === "logs") {
+      const logs = await get("logs.php", {action:"list"});
+      const actionColors = {login:"log-login",logout:"log-login",booking:"log-booking",booking_update:"log-booking",create_dorm:"log-dorm",delete_dorm:"log-delete",edit_dorm:"log-dorm",role_change:"log-admin",ban_user:"log-delete",delete_user:"log-delete",register:"log-booking",review:"log-review",forgot_password:"log-admin",reset_password:"log-admin",approve_dorm:"log-booking",reject_dorm:"log-delete",vacated:"log-delete"};
+      content.innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;">
+        <input class="form-input" style="max-width:220px;padding:8px 12px;font-size:13px;" placeholder="Filter by action or user..." id="log-filter" oninput="filterLogs(this.value)"/>
+        <button class="btn btn-secondary" style="font-size:13px;" onclick="clearLogs()">Clear All Logs</button>
+      </div>
+      <div class="table-wrap"><table>
+      <thead><tr><th>ID</th><th>User</th><th>Action</th><th>Description</th><th>IP</th><th>Timestamp</th></tr></thead>
+      <tbody id="logs-tbody">${logs.map(l=>`<tr>
+        <td style="color:var(--text3)">#${l.id}</td>
+        <td><strong>${l.user_name||"System"}</strong></td>
+        <td><span class="log-action ${actionColors[l.action]||"log-dorm"}">${l.action}</span></td>
+        <td style="font-size:12px;color:var(--text2)">${l.description}</td>
+        <td style="font-size:12px;color:var(--text3);font-family:monospace">${l.ip_address}</td>
+        <td style="font-size:12px;color:var(--text2)">${l.created_at}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+    } else if (tab === "bookings") {
+      const bookings = await get("bookings.php", {action:"list"});
+      _adminBookingsCache = bookings;
+      content.innerHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
+        <input class="form-input" id="admin-booking-search" placeholder="🔍 Search by student or dorm name..." style="max-width:280px;padding:8px 12px;font-size:13px;" oninput="filterAdminBookings()"/>
+        <select class="filter-select" id="admin-booking-status" onchange="filterAdminBookings()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="vacated">Vacated</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <span class="results-count" id="admin-booking-count">${bookings.length} booking${bookings.length!==1?"s":""}</span>
+      </div>
+      <div id="admin-bookings-table">${renderBookingsTable(bookings)}</div>`;
+    }
+  } catch(e) { content.innerHTML = `<div class="alert alert-error">Error loading data. Check server connection.</div>`; }
+}
+
+async function filterLogs(v) {
+  try {
+    const logs = await get("logs.php", {action:"list", filter:v});
+    const actionColors = {login:"log-login",logout:"log-login",booking:"log-booking",create_dorm:"log-dorm",delete_dorm:"log-delete",role_change:"log-admin",ban_user:"log-delete",delete_user:"log-delete",register:"log-booking",review:"log-review"};
+    const tbody = document.getElementById("logs-tbody");
+    if (tbody) tbody.innerHTML = logs.map(l=>`<tr>
+      <td style="color:var(--text3)">#${l.id}</td>
+      <td><strong>${l.user_name||"System"}</strong></td>
+      <td><span class="log-action ${actionColors[l.action]||"log-dorm"}">${l.action}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${l.description}</td>
+      <td style="font-size:12px;color:var(--text3);font-family:monospace">${l.ip_address}</td>
+      <td style="font-size:12px;color:var(--text2)">${l.created_at}</td>
+    </tr>`).join("");
+  } catch(e) {}
+}
+
+async function clearLogs() {
+  if (!confirm("Clear all activity logs? This cannot be undone.")) return;
+  try {
+    await post("logs.php?action=clear", {admin_id: currentUser.id});
+    showAlert("Logs cleared.");
+    loadAdminTab("logs");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function adminChangeRole(userId, role) {
+  try {
+    const data = await post("admin.php?action=change_role", {user_id: userId, role, admin_id: currentUser.id});
+    if (!data.success) { showAlert(data.message || "Error", "error"); return; }
+    showAlert("Role updated!");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function adminToggleBan(userId) {
+  try {
+    const data = await post("admin.php?action=toggle_ban", {user_id: userId, admin_id: currentUser.id});
+    if (!data.success) { showAlert(data.message || "Error", "error"); return; }
+    showAlert(`User ${data.status === "banned" ? "banned" : "unbanned"}!`);
+    loadAdminTab("overview");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function adminDeleteUser(userId) {
+  if (!confirm("Delete this user and all their data?\n\nThey will be moved to the Recently Deleted bin for 30 days before permanent removal.")) return;
+  try {
+    await post("admin.php?action=delete_user", {user_id: userId, admin_id: currentUser.id});
+    showAlert("User moved to Recently Deleted bin.");
+    loadAdminTab("overview");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function adminApproveDorm(dormId) {
+  try {
+    await post("dorms.php?action=approve", {id: dormId, user_id: currentUser.id});
+    showAlert("Listing approved! Owner has been notified.");
+    loadAdminTab("dorms");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function adminRejectDorm(dormId) {
+  try {
+    await post("dorms.php?action=reject", {id: dormId, user_id: currentUser.id});
+    showAlert("Listing rejected. Owner has been notified.");
+    loadAdminTab("dorms");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// INDIVIDUAL DORM DASHBOARD
+// ============================
+let currentDormDashId = null;
+
+function openDormDashboard(dormId) {
+  currentDormDashId = dormId;
+  showPage('dorm-dash');
+}
+
+async function renderDormDashboard() {
+  if (!currentUser || currentUser.role === "rentee") { showPage("home"); return; }
+  if (!currentDormDashId) { showPage("dashboard"); return; }
+
+  const p = document.getElementById("page-dorm-dash");
+  p.innerHTML = `<div class="section-header"><div><div class="section-title">⏳ Loading Dorm Dashboard...</div></div><button class="btn btn-secondary" onclick="showPage('dashboard')">← All Listings</button></div>`;
+
+  try {
+    const [dorm, bookings, reviews] = await Promise.all([
+      get("dorms.php", {action:"get", id: currentDormDashId}),
+      get("bookings.php", {action:"list", owner_id: currentUser.id}).then(bs => bs.filter(b => b.dorm_id == currentDormDashId)),
+      get("reviews.php", {action:"list", dorm_id: currentDormDashId})
+    ]);
+
+    const tenants  = bookings.filter(b => b.status === "approved");
+    const pending  = bookings.filter(b => b.status === "pending");
+    const rejected = bookings.filter(b => b.status === "rejected");
+    const vacated  = bookings.filter(b => b.status === "vacated");
+    const avgRating = reviews.length ? (reviews.reduce((a,r) => a+parseInt(r.rating),0)/reviews.length).toFixed(1) : 0;
+    const occupancy = dorm.total_slots > 0 ? Math.round(((dorm.total_slots - dorm.availability) / dorm.total_slots) * 100) : 0;
+    const images = Array.isArray(dorm.images) ? dorm.images : [];
+    const amenities = Array.isArray(dorm.amenities) ? dorm.amenities : (dorm.amenities ? dorm.amenities.split(",") : []);
+
+    p.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">📊 ${dorm.name}</div>
+        <div class="page-subtitle">Individual Dorm Dashboard · <span class="log-action ${dorm.status==="approved"?"log-booking":dorm.status==="pending"?"log-dorm":"log-delete"}" style="font-size:11px;">${dorm.status}</span></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="showDormModal(${dorm.id})">👁 View Listing</button>
+        <button class="btn btn-secondary" onclick="showPage('dashboard')">← All Listings</button>
+      </div>
+    </div>
+
+    <!-- OVERVIEW CARDS -->
+    <div class="dash-grid" style="margin-bottom:1.5rem;">
+      <div class="dash-card">
+        <div class="dash-num accent">₱${parseFloat(dorm.price).toLocaleString()}</div>
+        <div class="dash-label">Monthly Rate</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-num green">${tenants.length}</div>
+        <div class="dash-label">Active Tenants</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-num" style="color:#BA7517">${pending.length}</div>
+        <div class="dash-label">Pending Requests</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-num blue">${dorm.availability}/${dorm.total_slots}</div>
+        <div class="dash-label">Available Slots</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-num" style="color:#EF9F27">${avgRating}</div>
+        <div class="dash-label">Avg. Rating (${reviews.length} reviews)</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-num" style="color:var(--accent2)">${occupancy}%</div>
+        <div class="dash-label">Occupancy</div>
+      </div>
+    </div>
+
+    <!-- OCCUPANCY BAR -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+        <div style="font-size:14px;font-weight:700;">Occupancy Rate</div>
+        <div style="font-size:13px;color:var(--text2);">${dorm.total_slots - dorm.availability} occupied / ${dorm.total_slots} total slots</div>
+      </div>
+      <div style="height:12px;background:var(--bg);border-radius:20px;overflow:hidden;border:1px solid var(--border);">
+        <div style="height:100%;width:${occupancy}%;background:${occupancy>80?"#A32D2D":occupancy>50?"#EF9F27":"#3B6D11"};border-radius:20px;transition:width .5s;"></div>
+      </div>
+    </div>
+
+    <!-- DORM INFO SUMMARY -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;">Dorm Info</div>
+        <div style="font-size:13px;margin-bottom:.4rem;">📍 ${dorm.address}</div>
+        <div style="font-size:13px;margin-bottom:.4rem;">🎓 Near ${dorm.university}</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:.75rem;">${dorm.description||"No description."}</div>
+        <div class="amenity-list">${amenities.map(a=>`<span class="amenity">✓ ${a}</span>`).join("")}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;">Photo Gallery</div>
+        ${images.length > 0 ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
+          ${images.slice(0,6).map(img=>`<img src="${img}" style="width:100%;height:60px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">`).join("")}
+        </div>` : `<div style="color:var(--text3);font-size:13px;text-align:center;padding:2rem;">No photos uploaded yet.</div>`}
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs" style="margin-bottom:1rem;">
+      <button class="tab active" id="dorm-tab-tenants" onclick="switchDormTab('tenants',this)">Active Tenants (${tenants.length})</button>
+      <button class="tab" id="dorm-tab-pending" onclick="switchDormTab('pending',this)">Pending Requests ${pending.length>0?`<span style="background:var(--accent);color:#fff;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:4px;">${pending.length}</span>`:""}</button>
+      <button class="tab" id="dorm-tab-vacated" onclick="switchDormTab('vacated',this)">Former Tenants (${vacated.length})</button>
+      <button class="tab" id="dorm-tab-reviews" onclick="switchDormTab('reviews',this)">Reviews (${reviews.length})</button>
+    </div>
+    <div id="dorm-dash-content">${renderDormTenants(tenants, bookings)}</div>`;
+
+    // Store data for tab switching
+    window._dormDashData = { tenants, pending, vacated, rejected, reviews, bookings, dormId: dorm.id };
+
+  } catch(e) {
+    p.innerHTML += `<div class="alert alert-error">Error loading dorm dashboard. Check server connection.</div>`;
+  }
+}
+
+function switchDormTab(tab, btn) {
+  document.querySelectorAll("#page-dorm-dash .tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  const d = window._dormDashData || {};
+  const content = document.getElementById("dorm-dash-content");
+  if (tab === "tenants") content.innerHTML = renderDormTenants(d.tenants, d.bookings);
+  else if (tab === "pending") content.innerHTML = renderDormPending(d.pending, d.dormId);
+  else if (tab === "vacated") content.innerHTML = renderDormVacated(d.vacated);
+  else if (tab === "reviews") content.innerHTML = renderDormReviews(d.reviews);
+}
+
+function renderDormTenants(tenants, allBookings) {
+  if (!tenants.length) return `<div class="empty"><div class="empty-icon">👤</div><p>No active tenants right now.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Student</th><th>Email</th><th>Move-in Date</th><th>Message</th><th>Actions</th></tr></thead>
+  <tbody>${tenants.map(b=>`<tr>
+    <td><strong>${b.student_name||"Student"}</strong></td>
+    <td style="color:var(--text2);font-size:12px;">${b.student_email||"—"}</td>
+    <td>${b.date||"—"}</td>
+    <td style="max-width:160px;font-size:12px;color:var(--text2);">${b.message||"—"}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-info" style="font-size:12px;padding:5px 10px;" onclick="openChat(${b.id})">💬 Chat</button>
+    </div></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function renderDormPending(pending, dormId) {
+  if (!pending.length) return `<div class="empty"><div class="empty-icon">📋</div><p>No pending booking requests.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Student</th><th>Date Applied</th><th>Message</th><th>Actions</th></tr></thead>
+  <tbody>${pending.map(b=>`<tr>
+    <td><strong>${b.student_name||"Student"}</strong><br><small style="color:var(--text2)">${b.student_email||""}</small></td>
+    <td>${b.date||""}</td>
+    <td style="max-width:200px;font-size:12px;color:var(--text2)">${b.message||"—"}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-success" style="font-size:12px;padding:5px 10px;" onclick="updateBooking(${b.id},'approved',${dormId})">✅ Approve</button>
+      <button class="btn btn-danger" style="font-size:12px;padding:5px 10px;" onclick="updateBooking(${b.id},'rejected',${dormId})">❌ Reject</button>
+    </div></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function renderDormVacated(vacated) {
+  if (!vacated.length) return `<div class="empty"><div class="empty-icon">🚪</div><p>No former tenants yet.</p></div>`;
+  return `<div class="table-wrap"><table>
+  <thead><tr><th>Student</th><th>Move-in</th><th>Vacated</th></tr></thead>
+  <tbody>${vacated.map(b=>`<tr>
+    <td><strong>${b.student_name||"Student"}</strong></td>
+    <td>${b.date||"—"}</td>
+    <td>${b.vacate_date||"—"}</td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+
+function renderDormReviews(reviews) {
+  if (!reviews.length) return `<div class="empty"><div class="empty-icon">⭐</div><p>No reviews yet.</p></div>`;
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;">
+    ${reviews.map(r=>`<div class="review-item">
+      <div class="review-header">
+        <div class="review-avatar">${initials(r.user_name)}</div>
+        <span class="review-name">${r.user_name}</span>
+        <span style="margin-left:auto;">${starsHTML(r.rating)}</span>
+        <span class="review-date">${r.created_at}</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);">${r.comment}</p>
+    </div>`).join("")}
+  </div>`;
+}
+
+async function updateBooking(bookingId, status, dormId) {
+  try {
+    const data = await post("bookings.php?action=update", {id: bookingId, status, owner_id: currentUser.id});
+    if (!data.success) { showAlert(data.message || "Error", "error"); return; }
+    showAlert(status === "approved" ? "✅ Booking approved! Rentee can now chat with you." : `Booking ${status}.`);
+    // If called from dorm dashboard, refresh it; otherwise refresh main dashboard
+    if (dormId) {
+      currentDormDashId = dormId;
+      renderDormDashboard();
+    } else {
+      renderDashboard();
+    }
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// ADMIN: INACTIVE NOTICE & SEND
+// ============================
+async function adminSendNotice(dormId, dormName) {
+  if (!confirm(`Send an inactive notice for "${dormName}"?\n\nThe owner will have 30 days to update the listing or it will be automatically moved to the Recently Deleted bin.`)) return;
+  try {
+    const res = await post("bin.php?action=send_notice", {dorm_id: dormId, admin_id: currentUser.id});
+    if (!res.success) { showAlert(res.message || "Error", "error"); return; }
+    showAlert("Inactive notice sent! Owner has been notified.");
+    loadAdminTab("notices");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function adminResolveNotice(noticeId) {
+  try {
+    await post("bin.php?action=resolve_notice", {id: noticeId, admin_id: currentUser.id});
+    showAlert("Notice resolved.");
+    loadAdminTab("notices");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function adminProcessExpired() {
+  if (!confirm("Process all expired notices? Dorms that have exceeded the 30-day notice period will be moved to the Recently Deleted bin.")) return;
+  try {
+    const res = await post("bin.php?action=process_expired", {admin_id: currentUser.id});
+    showAlert(`Done! ${res.deleted||0} dorm(s) auto-deleted and moved to bin.`);
+    loadAdminTab("notices");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// ADMIN: CONTACT RENTERS
+// ============================
+let adminMsgRenterId = null;
+let adminMsgRenterName = null;
+
+async function adminOpenConversation(renterId, renterName, el) {
+  adminMsgRenterId = renterId;
+  adminMsgRenterName = renterName;
+
+  // Highlight selected
+  document.querySelectorAll("#admin-contact-list .chat-item").forEach(i => i.style.background = "");
+  if (el) el.style.background = "var(--bg)";
+
+  const panel = document.getElementById("admin-conversation-panel");
+  panel.innerHTML = `
+  <div style="padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:.75rem;">
+    <div class="chat-avatar" style="background:var(--accent2);width:36px;height:36px;font-size:13px;">${initials(renterName)}</div>
+    <div>
+      <div style="font-weight:700;font-size:14px;">${renterName}</div>
+      <div style="font-size:11px;color:var(--text2);">Renter</div>
+    </div>
+  </div>
+  <div class="chat-messages" id="admin-msg-list" style="flex:1;"><div style="text-align:center;padding:2rem;color:var(--text2)">⏳ Loading...</div></div>
+  <div class="chat-input-row">
+    <input id="admin-msg-input" class="form-input" placeholder="Type a message to ${renterName}..." onkeydown="if(event.key==='Enter')adminSendMessage()"/>
+    <button class="btn btn-primary" onclick="adminSendMessage()">Send</button>
+  </div>`;
+
+  try {
+    const msgs = await get("admin_messages.php", {action:"conversation", admin_id: currentUser.id, renter_id: renterId});
+    const list = document.getElementById("admin-msg-list");
+    if (!msgs.length) {
+      list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px;">No messages yet. Start the conversation!</div>`;
+    } else {
+      list.innerHTML = msgs.map(m => {
+        const isMine = m.sent_by == currentUser.id;
+        const t = m.created_at ? new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) : "";
+        return `<div class="chat-bubble ${isMine ? 'mine' : 'theirs'}" style="max-width:80%;">
+          ${!isMine ? `<div style="font-size:10px;font-weight:600;opacity:.7;margin-bottom:3px;">${m.renter_name||"Renter"}</div>` : ""}
+          ${m.message}
+          <div class="bubble-meta">${t}</div>
+        </div>`;
+      }).join("");
+      list.scrollTop = list.scrollHeight;
+    }
+  } catch(e) {
+    const list = document.getElementById("admin-msg-list");
+    if (list) list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text2)">Could not load messages.</div>`;
+  }
+}
+
+async function adminSendMessage() {
+  const input = document.getElementById("admin-msg-input");
+  if (!input) return;
+  const msg = input.value.trim();
+  if (!msg || !adminMsgRenterId) return;
+  input.value = "";
+  try {
+    const data = await post("admin_messages.php", {
+      action: "send",
+      admin_id: currentUser.id, renter_id: adminMsgRenterId, message: msg
+    });
+    if (!data.success) { showAlert(data.message || "Error sending", "error"); return; }
+    // Reload conversation to show all messages including renter replies
+    const msgs = await get("admin_messages.php", {action:"conversation", admin_id: currentUser.id, renter_id: adminMsgRenterId});
+    const list = document.getElementById("admin-msg-list");
+    if (list && msgs.length) {
+      list.innerHTML = msgs.map(m => {
+        const isMine = m.sent_by == currentUser.id;
+        const t = m.created_at ? new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) : "";
+        return `<div class="chat-bubble ${isMine ? 'mine' : 'theirs'}" style="max-width:80%;">
+          ${!isMine ? `<div style="font-size:10px;font-weight:600;opacity:.7;margin-bottom:3px;">${m.renter_name||"Renter"}</div>` : ""}
+          ${m.message}
+          <div class="bubble-meta">${t}</div>
+        </div>`;
+      }).join("");
+      list.scrollTop = list.scrollHeight;
+    }
+  } catch(e) { showAlert("Connection error sending message.", "error"); }
+}
+
+// ============================
+// ADMIN: RECENTLY DELETED BIN
+// ============================
+async function renderAdminBin() {
+  if (!currentUser || currentUser.role !== "admin") { showPage("home"); return; }
+  const p = document.getElementById("page-admin-bin");
+  p.innerHTML = `
+  <div class="section-header">
+    <div><div class="section-title">🗑 Recently Deleted</div><div class="page-subtitle">Items deleted in the last 30 days. After that, they are permanently removed.</div></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="showPage('admin')">← Admin Dashboard</button>
+      <button class="btn btn-danger" onclick="adminClearExpiredBin()">🧹 Clear Expired</button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div style="display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center;">
+    <select class="filter-select" id="bin-type-filter" onchange="loadBinItems()">
+      <option value="">All Types</option>
+      <option value="dorm">Dorms</option>
+      <option value="user">Users</option>
+    </select>
+    <input class="form-input" id="bin-search" placeholder="Search deleted items..." style="max-width:250px;padding:8px 12px;font-size:13px;" oninput="loadBinItems()"/>
+    <span class="results-count" id="bin-count"></span>
+  </div>
+  <div id="bin-content"><div style="text-align:center;padding:3rem;color:var(--text2)">⏳ Loading bin...</div></div>`;
+
+  loadBinItems();
+}
+
+async function loadBinItems() {
+  const type   = document.getElementById("bin-type-filter")?.value || "";
+  const search = document.getElementById("bin-search")?.value || "";
+  const content = document.getElementById("bin-content");
+  if (!content) return;
+
+  try {
+    const items = await get("bin.php", {action:"list", type, search});
+    const count = document.getElementById("bin-count");
+    if (count) count.textContent = `${items.length} item${items.length!==1?"s":""}`;
+
+    if (!items.length) {
+      content.innerHTML = `<div class="empty"><div class="empty-icon">🗑</div><p>The bin is empty. Deleted items appear here for 30 days.</p></div>`;
+      return;
+    }
+
+    content.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Type</th><th>Name / Details</th><th>Deleted By</th><th>Deleted At</th><th>Auto-Purge</th><th>Actions</th></tr></thead>
+    <tbody>${items.map(item => {
+      const d = item.data_parsed || {};
+      const isExpired = new Date(item.auto_purge_at) < new Date();
+      const typeBadge = item.type === "dorm"
+        ? `<span class="log-action log-dorm">🏠 Dorm</span>`
+        : `<span class="log-action log-admin">👤 User</span>`;
+      const nameInfo = item.type === "dorm"
+        ? `<strong>${d.name||"Unknown Dorm"}</strong><br><small style="color:var(--text2)">${d.address||""} · ${d.university||""}</small>`
+        : `<strong>${d.name||"Unknown User"}</strong><br><small style="color:var(--text2)">${d.email||""} · ${d.role||""}</small>`;
+
+      return `<tr>
+        <td>${typeBadge}</td>
+        <td>${nameInfo}</td>
+        <td>${item.deleted_by_name||"System"}</td>
+        <td style="font-size:12px;color:var(--text2)">${item.deleted_at}</td>
+        <td style="font-size:12px;color:${isExpired?"#A32D2D":"var(--text2)"};font-weight:${isExpired?"700":"400"}">${isExpired?"<span class='log-action log-delete'>Expired</span>":item.auto_purge_at}</td>
+        <td><div class="action-btns">
+          <button class="btn btn-success" style="font-size:12px;padding:5px 10px;" onclick="adminRestoreItem(${item.id},'${item.type}')">↩ Restore</button>
+          <button class="btn btn-danger" style="font-size:12px;padding:5px 10px;" onclick="adminPurgeItem(${item.id})">✕ Delete Forever</button>
+        </div></td>
+      </tr>`;
+    }).join("")}</tbody></table></div>`;
+
+  } catch(e) {
+    const content = document.getElementById("bin-content");
+    if (content) content.innerHTML = `<div class="alert alert-error">Error loading bin. Make sure bin.php is installed.</div>`;
+  }
+}
+
+async function adminRestoreItem(id, type) {
+  if (!confirm(`Restore this ${type}? It will be added back as pending review.`)) return;
+  try {
+    const data = await post("bin.php?action=restore", {id, admin_id: currentUser.id});
+    if (!data.success) { showAlert(data.message || "Restore failed", "error"); return; }
+    showAlert(`${type} restored successfully!`);
+    loadBinItems();
+    // Refresh admin dorm/user list too
+    if (type === "dorm") loadAdminTab("dorms");
+    else if (type === "user") loadAdminTab("overview");
+  } catch(e) { showAlert("Connection error restoring item. Check bin.php.", "error"); }
+}
+
+async function adminPurgeItem(id) {
+  if (!confirm("Permanently delete this item? This CANNOT be undone.")) return;
+  try {
+    await post("bin.php?action=purge", {id, admin_id: currentUser.id});
+    showAlert("Item permanently deleted.");
+    loadBinItems();
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+async function adminClearExpiredBin() {
+  if (!confirm("Clear all expired items from the bin? This will permanently delete items older than 30 days.")) return;
+  try {
+    await post("bin.php?action=clear_expired", {admin_id: currentUser.id});
+    showAlert("Expired items cleared.");
+    loadBinItems();
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// Override adminDeleteDorm to send to recently deleted bin
+async function adminDeleteDorm(dormId) {
+  if (!confirm("Delete this listing? It will be moved to the Recently Deleted bin for 30 days.")) return;
+  try {
+    // First snapshot the dorm for the bin
+    const dorm = await get("dorms.php", {action:"get", id: dormId});
+    const purgeAt = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,19).replace("T"," ");
+    await post("bin.php?action=create_entry", {
+      type: "dorm",
+      original_id: dormId,
+      data: JSON.stringify(dorm),
+      deleted_by: currentUser.id,
+      auto_purge_at: purgeAt
+    });
+    await post("dorms.php?action=delete", {id: dormId, user_id: currentUser.id});
+    showAlert("Listing moved to Recently Deleted bin.");
+    loadAdminTab("dorms");
+  } catch(e) { showAlert("Connection error.", "error"); }
+}
+
+// ============================
+// INIT
+// ============================
+renderNav();
+renderPage("home");
+</script>
+</body>
+</html>
