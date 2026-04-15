@@ -397,7 +397,6 @@ function showPage(name) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   const p = document.getElementById("page-" + name);
   if (p) { p.classList.add("active"); renderPage(name); }
-  // Close notif panel when navigating
   if (notifPanelOpen) toggleNotifPanel();
 }
 
@@ -704,17 +703,14 @@ async function loadNotifPanel() {
 }
 
 async function handleNotifClick(notifId, relatedId, type) {
-  // Mark as read
   await post("notifications.php?action=mark_read", {user_id: currentUser.id, id: notifId}).catch(()=>{});
   loadNotifCount();
   toggleNotifPanel();
-
-  // Navigate to relevant page
   if (type === "new_message" || type === "booking_approved" || type === "booking_confirmed") {
     if (relatedId) openChat(relatedId);
     else showPage("chat");
   } else if (type === "admin_message") {
-    showPage("chat"); // renters see admin messages in chat area
+    showPage("chat");
   } else if (type === "inactive_notice") {
     showPage("dashboard");
   } else if (type === "new_booking" || type === "tenant_vacated") {
@@ -785,7 +781,6 @@ async function renderChatList() {
     const chats = await get("chat.php", {action:"my_chats", user_id: currentUser.id});
     const wrap = document.getElementById("chat-list-wrap");
 
-    // For renters: always show admin messages section (so they can initiate contact)
     let adminMsgHTML = "";
     if (currentUser.role === "renter") {
       try {
@@ -924,7 +919,6 @@ async function openChat(bookingId) {
   activeChatBookingId = bookingId;
   stopChatPolling();
 
-  // Get booking details
   let bookingInfo = null;
   try {
     const myBookings = await get("bookings.php", {action:"list", user_id: currentUser.id});
@@ -956,10 +950,8 @@ async function openChat(bookingId) {
   </div></div>`;
 
   await loadChatMessages(bookingId);
-  // Mark messages as read
   post("chat.php", {action: "mark_read", booking_id: bookingId, user_id: currentUser.id}).catch(()=>{});
   loadNotifCount();
-  // Poll for new messages every 5 seconds
   chatPollTimer = setInterval(() => loadChatMessages(bookingId), 5000);
 }
 
@@ -1099,7 +1091,7 @@ async function showDormModal(id) {
 
   try {
     const [dorm, reviews] = await Promise.all([
-      get("dorms.php", {action:"get", id}),
+      get("dorms.php", {action:"detail", id}),
       get("reviews.php", {action:"list", dorm_id:id})
     ]);
     const rating = reviews.length ? (reviews.reduce((a,r) => a+parseInt(r.rating),0)/reviews.length).toFixed(1) : 0;
@@ -1109,7 +1101,6 @@ async function showDormModal(id) {
     const isOwner = currentUser && currentUser.id == dorm.owner_id;
     const icons = ["🏠","🏡","🏢","🏗️","🏘️"];
 
-    // Build photo gallery HTML
     const galleryHTML = images.length > 0
       ? `<div style="margin-bottom:1rem;">
           <img src="${images[0]}" id="modal-main-img" class="dorm-gallery-main" alt="${dorm.name}" onerror="this.src=''">
@@ -1206,7 +1197,6 @@ async function doCancelBooking(bookingId) {
     if (!data.success) { showAlert(data.message || "Could not cancel booking.", "error"); return; }
     showAlert("Booking cancelled. You can now apply to another dorm.");
     closeModal();
-    // Refresh whichever page is active
     const renteeActive = document.getElementById("page-rentee-dash")?.classList.contains("active");
     if (renteeActive) renderRenteeDashboard();
     else renderHome();
@@ -1220,7 +1210,6 @@ async function doVacate(bookingId) {
     if (!data.success) { showAlert(data.message || "Error", "error"); return; }
     showAlert("You have successfully vacated. The slot is now available for others.");
     closeModal();
-    // Refresh whichever page is active
     const renteeActive = document.getElementById("page-rentee-dash")?.classList.contains("active");
     if (renteeActive) renderRenteeDashboard();
     else renderHome();
@@ -1473,8 +1462,6 @@ function switchDashTab(tab, btn, dorms, bookings) {
   else if (tab === "former") c.innerHTML = renderFormerTenants(bookings);
 }
 
-// updateBooking is defined below (with dormId param for dorm dashboard refresh)
-
 async function deleteMyListing(id) {
   if (!confirm("Delete this listing?")) return;
   try {
@@ -1491,7 +1478,7 @@ async function showEditDormModal(dormId) {
   const isAdmin = currentUser && currentUser.role === "admin";
   let dorm;
   try {
-    dorm = await get("dorms.php", {action:"get", id: dormId});
+    dorm = await get("dorms.php", {action:"detail", id: dormId});
   } catch(e) { showAlert("Could not load dorm details.", "error"); return; }
 
   const amenities  = Array.isArray(dorm.amenities) ? dorm.amenities : (dorm.amenities ? dorm.amenities.split(",") : []);
@@ -1539,7 +1526,6 @@ async function showEditDormModal(dormId) {
         </div>
       </div>
 
-      <!-- PHOTO MANAGEMENT -->
       <div class="form-group">
         <label class="form-label">Dorm Photos</label>
         ${images.length > 0 ? `
@@ -1571,7 +1557,6 @@ async function showEditDormModal(dormId) {
     </div>
   </div></div>`;
 
-  // Store new files for edit modal
   window._editFiles = [];
 }
 
@@ -1601,7 +1586,6 @@ async function submitEditDorm(dormId) {
     const data = await post("dorms.php?action=edit", payload);
     if (!data.success) { showAlert(data.message || "Error saving changes", "error"); if (btn) { btn.disabled=false; btn.textContent="Save Changes"; } return; }
 
-    // Upload any new photos added in edit modal
     const editFiles = window._editFiles || [];
     if (editFiles.length > 0) {
       if (btn) btn.textContent = `Uploading ${editFiles.length} photo(s)...`;
@@ -1666,7 +1650,6 @@ async function deleteExistingImage(imgPath, dormId) {
       user_role: currentUser.role, image: imgPath
     });
     if (!data.success) { showAlert("Could not remove photo", "error"); return; }
-    // Remove from DOM
     const key = btoa(imgPath).replace(/=/g,"");
     const el  = document.getElementById("ed-img-" + key);
     if (el) el.remove();
@@ -1677,8 +1660,7 @@ async function deleteExistingImage(imgPath, dormId) {
 // ============================
 // ADD LISTING
 // ============================
-let listingFiles = []; // staged image files before submit
-
+let listingFiles = [];
 let listingPickerMap = null;
 let listingPickerMarker = null;
 let listingLatLng = { lat: null, lng: null };
@@ -1715,10 +1697,9 @@ function renderListingForm() {
       </div>
     </div>
 
-    <!-- MAP LOCATION PICKER -->
     <div class="form-section">
       <div class="form-section-title">📍 Pin Your Dorm Location <span style="font-weight:400;color:var(--accent);text-transform:none;font-size:12px;">* Required</span></div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:.75rem;">Click anywhere on the map to drop a pin at your dorm's exact location. You can also search by university shortcut buttons below.</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:.75rem;">Click anywhere on the map to drop a pin at your dorm's exact location.</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem;">
         ${[["UST",14.6103,120.9890],["PLM",14.5800,120.9840],["DLSU",14.5640,120.9935],["FEU",14.6001,120.9869],["Mapua",14.5950,120.9827],["PUP",14.5990,120.9937]].map(([u,la,ln])=>
           `<button type="button" class="btn btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="flyListingMap(${la},${ln},'${u}')">🎓 ${u}</button>`
@@ -1752,7 +1733,6 @@ function renderListingForm() {
     </button>
   </div></div>`;
 
-  // Init map picker after DOM is ready
   setTimeout(() => {
     if (listingPickerMap) { listingPickerMap.remove(); listingPickerMap = null; }
     listingPickerMarker = null;
@@ -1761,18 +1741,15 @@ function renderListingForm() {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {attribution:"© OpenStreetMap"}).addTo(m);
     listingPickerMap = m;
 
-    // University labels on picker map
     const univs = [{name:"UST",lat:14.6103,lng:120.9890},{name:"PLM",lat:14.5800,lng:120.9840},{name:"DLSU",lat:14.5640,lng:120.9935},{name:"FEU",lat:14.6001,lng:120.9869},{name:"Mapua",lat:14.5950,lng:120.9827}];
     univs.forEach(u => {
       const icon = L.divIcon({html:`<div style="background:#185FA5;color:#fff;padding:3px 7px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3)">${u.name}</div>`,className:"",iconAnchor:[20,10]});
       L.marker([u.lat, u.lng], {icon}).addTo(m);
     });
 
-    // Click to place pin
     m.on("click", function(e) {
       const { lat, lng } = e.latlng;
       listingLatLng = { lat: lat.toFixed(6), lng: lng.toFixed(6) };
-
       if (listingPickerMarker) {
         listingPickerMarker.setLatLng(e.latlng);
       } else {
@@ -1861,7 +1838,6 @@ async function submitListing() {
   if (btn) { btn.disabled = true; btn.textContent = "Submitting..."; }
 
   try {
-    // Step 1: Create the dorm record
     const data = await post("dorms.php?action=add", {
       owner_id: currentUser.id, name, description: desc, address: addr,
       university: univ, price,
@@ -1874,7 +1850,6 @@ async function submitListing() {
 
     const dormId = data.id;
 
-    // Step 2: Upload images if any were selected
     if (listingFiles.length > 0) {
       if (btn) btn.textContent = `Uploading ${listingFiles.length} photo(s)...`;
       const formData = new FormData();
@@ -1929,7 +1904,6 @@ async function renderRenteeDashboard() {
       return;
     }
 
-    // Stats row
     const statsHTML = `
     <div class="dash-grid" style="margin-bottom:1.5rem;">
       <div class="dash-card"><div class="dash-num" style="color:#BA7517">${pending.length}</div><div class="dash-label">Pending</div></div>
@@ -1938,7 +1912,6 @@ async function renderRenteeDashboard() {
       <div class="dash-card"><div class="dash-num" style="color:var(--text3)">${vacated.length + cancelled.length}</div><div class="dash-label">Closed</div></div>
     </div>`;
 
-    // Tabs
     const tabsHTML = `
     <div class="tabs">
       <button class="tab active" id="rt-tab-all" onclick="switchRenteeTab('all',this)">All (${bookings.length})</button>
@@ -2048,9 +2021,6 @@ function switchAdminTab(tab, btn) {
   loadAdminTab(tab);
 }
 
-// ============================
-// ADMIN SEARCH/FILTER HELPERS
-// ============================
 let _adminUsersCache = [];
 let _adminDormsCache = [];
 let _adminBookingsCache = [];
@@ -2215,13 +2185,12 @@ async function loadAdminTab(tab) {
       </div>
       <div id="admin-dorms-table">${renderDormsTable(dorms)}</div>`;
     } else if (tab === "notices") {
-      // Inactive notices tab
       const notices = await get("bin.php", {action:"notices"});
       const pending = await get("admin.php", {action:"dorms"}).then(ds => ds.filter(d => d.status === "approved" && parseInt(d.availability) === 0));
       content.innerHTML = `
       <div style="margin-bottom:1.5rem;">
         <div style="font-size:15px;font-weight:700;margin-bottom:.5rem;">⚠️ Active Inactive Notices</div>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">Dorms that have been flagged as inactive. If not updated within 30 days, they will be automatically moved to the Recently Deleted bin.</p>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">Dorms flagged as inactive. If not updated within 30 days, they will be moved to the Recently Deleted bin.</p>
         ${notices.length ? `<div class="table-wrap"><table>
         <thead><tr><th>Dorm</th><th>Owner</th><th>Notice Date</th><th>Expires</th><th>Actions</th></tr></thead>
         <tbody>${notices.map(n=>`<tr>
@@ -2233,7 +2202,7 @@ async function loadAdminTab(tab) {
             <button class="btn btn-success" style="font-size:12px;padding:5px 10px;" onclick="adminResolveNotice(${n.id})">✅ Resolve</button>
           </div></td>
         </tr>`).join("")}</tbody></table></div>`
-        : `<div class="alert alert-success">No active inactive notices. All dorms are in good standing.</div>`}
+        : `<div class="alert alert-success">No active inactive notices.</div>`}
       </div>
       <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0;">
       <div>
@@ -2241,7 +2210,6 @@ async function loadAdminTab(tab) {
           <div style="font-size:15px;font-weight:700;">Full Approved Dorms (0 availability)</div>
           <button class="btn btn-warning" style="font-size:12px;" onclick="adminProcessExpired()">🔄 Process Expired Notices</button>
         </div>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">These approved dorms currently have zero available slots. You can send an inactive notice if a dorm has been full for a prolonged period.</p>
         ${pending.length ? `<div class="table-wrap"><table>
         <thead><tr><th>Name</th><th>Owner</th><th>University</th><th>Slots</th><th>Actions</th></tr></thead>
         <tbody>${pending.map(d=>`<tr>
@@ -2255,7 +2223,6 @@ async function loadAdminTab(tab) {
       </div>`;
 
     } else if (tab === "contact") {
-      // Contact renters tab
       const renters = await get("admin_messages.php", {action:"renters"});
       _adminRentersCache = renters;
       content.innerHTML = `
@@ -2263,7 +2230,7 @@ async function loadAdminTab(tab) {
         <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;display:flex;flex-direction:column;">
           <div style="padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--bg);">
             <div style="font-size:13px;font-weight:700;margin-bottom:.5rem;">Renters <span id="admin-renter-count" style="color:var(--text2);font-weight:400;">(${renters.length})</span></div>
-            <input class="form-input" id="admin-renter-search" placeholder="🔍 Search by name or email..." style="padding:7px 10px;font-size:12px;width:100%;" oninput="filterAdminRenters()"/>
+            <input class="form-input" id="admin-renter-search" placeholder="🔍 Search..." style="padding:7px 10px;font-size:12px;width:100%;" oninput="filterAdminRenters()"/>
           </div>
           <div id="admin-contact-list" style="overflow-y:auto;flex:1;max-height:480px;">
             ${renters.length ? renters.map(r=>`
@@ -2282,7 +2249,7 @@ async function loadAdminTab(tab) {
             <div>
               <div style="font-size:48px;margin-bottom:1rem;">📧</div>
               <div style="font-size:15px;font-weight:600;margin-bottom:.5rem;">Select a Renter</div>
-              <div style="font-size:13px;">Choose a renter from the list to start or view a conversation.</div>
+              <div style="font-size:13px;">Choose a renter from the list to view conversations.</div>
             </div>
           </div>
         </div>
@@ -2413,7 +2380,7 @@ async function renderDormDashboard() {
 
   try {
     const [dorm, bookings, reviews] = await Promise.all([
-      get("dorms.php", {action:"get", id: currentDormDashId}),
+      get("dorms.php", {action:"detail", id: currentDormDashId}),
       get("bookings.php", {action:"list", owner_id: currentUser.id}).then(bs => bs.filter(b => b.dorm_id == currentDormDashId)),
       get("reviews.php", {action:"list", dorm_id: currentDormDashId})
     ]);
@@ -2439,35 +2406,15 @@ async function renderDormDashboard() {
       </div>
     </div>
 
-    <!-- OVERVIEW CARDS -->
     <div class="dash-grid" style="margin-bottom:1.5rem;">
-      <div class="dash-card">
-        <div class="dash-num accent">₱${parseFloat(dorm.price).toLocaleString()}</div>
-        <div class="dash-label">Monthly Rate</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num green">${tenants.length}</div>
-        <div class="dash-label">Active Tenants</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num" style="color:#BA7517">${pending.length}</div>
-        <div class="dash-label">Pending Requests</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num blue">${dorm.availability}/${dorm.total_slots}</div>
-        <div class="dash-label">Available Slots</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num" style="color:#EF9F27">${avgRating}</div>
-        <div class="dash-label">Avg. Rating (${reviews.length} reviews)</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-num" style="color:var(--accent2)">${occupancy}%</div>
-        <div class="dash-label">Occupancy</div>
-      </div>
+      <div class="dash-card"><div class="dash-num accent">₱${parseFloat(dorm.price).toLocaleString()}</div><div class="dash-label">Monthly Rate</div></div>
+      <div class="dash-card"><div class="dash-num green">${tenants.length}</div><div class="dash-label">Active Tenants</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:#BA7517">${pending.length}</div><div class="dash-label">Pending Requests</div></div>
+      <div class="dash-card"><div class="dash-num blue">${dorm.availability}/${dorm.total_slots}</div><div class="dash-label">Available Slots</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:#EF9F27">${avgRating}</div><div class="dash-label">Avg. Rating (${reviews.length} reviews)</div></div>
+      <div class="dash-card"><div class="dash-num" style="color:var(--accent2)">${occupancy}%</div><div class="dash-label">Occupancy</div></div>
     </div>
 
-    <!-- OCCUPANCY BAR -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
         <div style="font-size:14px;font-weight:700;">Occupancy Rate</div>
@@ -2478,7 +2425,6 @@ async function renderDormDashboard() {
       </div>
     </div>
 
-    <!-- DORM INFO SUMMARY -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;">
         <div style="font-size:13px;font-weight:700;margin-bottom:.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;">Dorm Info</div>
@@ -2495,7 +2441,6 @@ async function renderDormDashboard() {
       </div>
     </div>
 
-    <!-- TABS -->
     <div class="tabs" style="margin-bottom:1rem;">
       <button class="tab active" id="dorm-tab-tenants" onclick="switchDormTab('tenants',this)">Active Tenants (${tenants.length})</button>
       <button class="tab" id="dorm-tab-pending" onclick="switchDormTab('pending',this)">Pending Requests ${pending.length>0?`<span style="background:var(--accent);color:#fff;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:4px;">${pending.length}</span>`:""}</button>
@@ -2504,7 +2449,6 @@ async function renderDormDashboard() {
     </div>
     <div id="dorm-dash-content">${renderDormTenants(tenants, bookings)}</div>`;
 
-    // Store data for tab switching
     window._dormDashData = { tenants, pending, vacated, rejected, reviews, bookings, dormId: dorm.id };
 
   } catch(e) {
@@ -2584,7 +2528,6 @@ async function updateBooking(bookingId, status, dormId) {
     const data = await post("bookings.php?action=update", {id: bookingId, status, owner_id: currentUser.id});
     if (!data.success) { showAlert(data.message || "Error", "error"); return; }
     showAlert(status === "approved" ? "✅ Booking approved! Rentee can now chat with you." : `Booking ${status}.`);
-    // If called from dorm dashboard, refresh it; otherwise refresh main dashboard
     if (dormId) {
       currentDormDashId = dormId;
       renderDormDashboard();
@@ -2598,7 +2541,7 @@ async function updateBooking(bookingId, status, dormId) {
 // ADMIN: INACTIVE NOTICE & SEND
 // ============================
 async function adminSendNotice(dormId, dormName) {
-  if (!confirm(`Send an inactive notice for "${dormName}"?\n\nThe owner will have 30 days to update the listing or it will be automatically moved to the Recently Deleted bin.`)) return;
+  if (!confirm(`Send an inactive notice for "${dormName}"?\n\nThe owner will have 30 days to update the listing.`)) return;
   try {
     const res = await post("bin.php?action=send_notice", {dorm_id: dormId, admin_id: currentUser.id});
     if (!res.success) { showAlert(res.message || "Error", "error"); return; }
@@ -2616,7 +2559,7 @@ async function adminResolveNotice(noticeId) {
 }
 
 async function adminProcessExpired() {
-  if (!confirm("Process all expired notices? Dorms that have exceeded the 30-day notice period will be moved to the Recently Deleted bin.")) return;
+  if (!confirm("Process all expired notices?")) return;
   try {
     const res = await post("bin.php?action=process_expired", {admin_id: currentUser.id});
     showAlert(`Done! ${res.deleted||0} dorm(s) auto-deleted and moved to bin.`);
@@ -2634,7 +2577,6 @@ async function adminOpenConversation(renterId, renterName, el) {
   adminMsgRenterId = renterId;
   adminMsgRenterName = renterName;
 
-  // Highlight selected
   document.querySelectorAll("#admin-contact-list .chat-item").forEach(i => i.style.background = "");
   if (el) el.style.background = "var(--bg)";
 
@@ -2688,7 +2630,6 @@ async function adminSendMessage() {
       admin_id: currentUser.id, renter_id: adminMsgRenterId, message: msg
     });
     if (!data.success) { showAlert(data.message || "Error sending", "error"); return; }
-    // Reload conversation to show all messages including renter replies
     const msgs = await get("admin_messages.php", {action:"conversation", admin_id: currentUser.id, renter_id: adminMsgRenterId});
     const list = document.getElementById("admin-msg-list");
     if (list && msgs.length) {
@@ -2714,14 +2655,12 @@ async function renderAdminBin() {
   const p = document.getElementById("page-admin-bin");
   p.innerHTML = `
   <div class="section-header">
-    <div><div class="section-title">🗑 Recently Deleted</div><div class="page-subtitle">Items deleted in the last 30 days. After that, they are permanently removed.</div></div>
+    <div><div class="section-title">🗑 Recently Deleted</div><div class="page-subtitle">Items deleted in the last 30 days.</div></div>
     <div style="display:flex;gap:8px;">
       <button class="btn btn-secondary" onclick="showPage('admin')">← Admin Dashboard</button>
       <button class="btn btn-danger" onclick="adminClearExpiredBin()">🧹 Clear Expired</button>
     </div>
   </div>
-
-  <!-- FILTERS -->
   <div style="display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center;">
     <select class="filter-select" id="bin-type-filter" onchange="loadBinItems()">
       <option value="">All Types</option>
@@ -2748,7 +2687,7 @@ async function loadBinItems() {
     if (count) count.textContent = `${items.length} item${items.length!==1?"s":""}`;
 
     if (!items.length) {
-      content.innerHTML = `<div class="empty"><div class="empty-icon">🗑</div><p>The bin is empty. Deleted items appear here for 30 days.</p></div>`;
+      content.innerHTML = `<div class="empty"><div class="empty-icon">🗑</div><p>The bin is empty.</p></div>`;
       return;
     }
 
@@ -2784,16 +2723,15 @@ async function loadBinItems() {
 }
 
 async function adminRestoreItem(id, type) {
-  if (!confirm(`Restore this ${type}? It will be added back as pending review.`)) return;
+  if (!confirm(`Restore this ${type}?`)) return;
   try {
     const data = await post("bin.php?action=restore", {id, admin_id: currentUser.id});
     if (!data.success) { showAlert(data.message || "Restore failed", "error"); return; }
     showAlert(`${type} restored successfully!`);
     loadBinItems();
-    // Refresh admin dorm/user list too
     if (type === "dorm") loadAdminTab("dorms");
     else if (type === "user") loadAdminTab("overview");
-  } catch(e) { showAlert("Connection error restoring item. Check bin.php.", "error"); }
+  } catch(e) { showAlert("Connection error restoring item.", "error"); }
 }
 
 async function adminPurgeItem(id) {
@@ -2806,7 +2744,7 @@ async function adminPurgeItem(id) {
 }
 
 async function adminClearExpiredBin() {
-  if (!confirm("Clear all expired items from the bin? This will permanently delete items older than 30 days.")) return;
+  if (!confirm("Clear all expired items from the bin?")) return;
   try {
     await post("bin.php?action=clear_expired", {admin_id: currentUser.id});
     showAlert("Expired items cleared.");
@@ -2814,12 +2752,10 @@ async function adminClearExpiredBin() {
   } catch(e) { showAlert("Connection error.", "error"); }
 }
 
-// Override adminDeleteDorm to send to recently deleted bin
 async function adminDeleteDorm(dormId) {
   if (!confirm("Delete this listing? It will be moved to the Recently Deleted bin for 30 days.")) return;
   try {
-    // First snapshot the dorm for the bin
-    const dorm = await get("dorms.php", {action:"get", id: dormId});
+    const dorm = await get("dorms.php", {action:"detail", id: dormId});
     const purgeAt = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,19).replace("T"," ");
     await post("bin.php?action=create_entry", {
       type: "dorm",
